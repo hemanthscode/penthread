@@ -1,6 +1,6 @@
 import * as authService from './auth.service.js';
 import { sendEmail } from '../../config/email.js';
-import config from '../../config/index.js';
+import User from './auth.model.js';
 
 export async function register(req, res, next) {
   try {
@@ -22,7 +22,7 @@ export async function login(req, res, next) {
 }
 
 export async function logout(req, res) {
-  // For JWT, client simply deletes token. Optionally add blacklist in future.
+  // Stateless JWT logout - just client side removal
   res.status(200).json({ message: 'Logged out' });
 }
 
@@ -40,13 +40,13 @@ export async function refreshToken(req, res, next) {
 
 export async function forgotPassword(req, res, next) {
   try {
-    const resetToken = await authService.generatePasswordResetToken(req.body.email);
+    const { user, resetToken } = await authService.generatePasswordResetToken(req.body.email);
 
-    // Send email via EmailJS with token link placeholder
+    // Send email with nodemailer
     await sendEmail({
-      to_email: req.body.email,
+      to_name: user.name,
+      to_email: user.email,
       reset_link: `https://yourfrontend.com/reset-password?token=${resetToken}`,
-      subject: 'Password Reset Request',
     });
 
     res.json({ message: 'Password reset email sent' });
@@ -67,7 +67,7 @@ export async function resetPassword(req, res, next) {
 
 export async function getProfile(req, res, next) {
   try {
-    const user = req.user; // Loaded by auth middleware
+    const user = req.user; 
     res.json({ id: user._id, name: user.name, email: user.email, role: user.role });
   } catch (err) {
     next(err);
@@ -76,13 +76,13 @@ export async function getProfile(req, res, next) {
 
 export async function changePassword(req, res, next) {
   try {
-    const user = req.user;
-    const { currentPassword, newPassword } = req.body;
+    const userFromToken = req.user;
+    const user = await User.findById(userFromToken._id);
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
+    const { currentPassword, newPassword } = req.body;
     const isMatch = await user.comparePassword(currentPassword);
-    if (!isMatch) {
-      return res.status(400).json({ message: 'Current password is incorrect' });
-    }
+    if (!isMatch) return res.status(400).json({ message: 'Current password is incorrect' });
 
     user.password = newPassword;
     await user.save();

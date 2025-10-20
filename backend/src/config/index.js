@@ -11,11 +11,14 @@ export default {
       ? process.env.MONGO_PROD_URI
       : process.env.MONGO_DEV_URI || 'mongodb://localhost:27017/blog-platform',
   jwtSecret: process.env.JWT_SECRET || 'supersecretkey',
-  emailJsServiceId: process.env.EMAILJS_SERVICE_ID,
-  emailJsTemplateId: process.env.EMAILJS_TEMPLATE_ID,
-  emailJsUserId: process.env.EMAILJS_USER_ID,
+
+  // For Nodemailer email SMTP authentication
+  emailUser: process.env.EMAIL_USER,
+  emailPassword: process.env.EMAIL_PASSWORD,
+
   rateLimitWindowMs: 15 * 60 * 1000, // 15 minutes
   rateLimitMax: 100, // max requests per window per IP
+
   logs: {
     level: env === 'production' ? 'info' : 'debug',
   },
