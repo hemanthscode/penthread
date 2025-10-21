@@ -5,7 +5,7 @@ export async function createPost(req, res, next) {
     const post = await postService.createPost({
       ...req.body,
       author: req.user._id,
-      status: 'pending', // default to pending approval
+      status: 'pending',
     });
     res.status(201).json(post);
   } catch (err) {
@@ -25,10 +25,7 @@ export async function getPost(req, res, next) {
 
 export async function getPosts(req, res, next) {
   try {
-    // For public, only approved or published posts
     const filter = { status: { $in: ['approved', 'published'] } };
-
-    // Optional filters
     if (req.query.authorId) filter.author = req.query.authorId;
     if (req.query.categoryId) filter.categories = req.query.categoryId;
     if (req.query.tagId) filter.tags = req.query.tagId;

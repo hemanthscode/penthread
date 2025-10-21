@@ -2,6 +2,9 @@ import * as authService from './auth.service.js';
 import { sendEmail } from '../../config/email.js';
 import User from './auth.model.js';
 
+/**
+ * Registers a new user with validated input.
+ */
 export async function register(req, res, next) {
   try {
     const user = await authService.registerUser(req.body);
@@ -11,6 +14,9 @@ export async function register(req, res, next) {
   }
 }
 
+/**
+ * Authenticates user and returns JWT tokens.
+ */
 export async function login(req, res, next) {
   try {
     const user = await authService.loginUser(req.body.email, req.body.password);
@@ -21,11 +27,16 @@ export async function login(req, res, next) {
   }
 }
 
+/**
+ * Stateless logout endpoint acknowledgment.
+ */
 export async function logout(req, res) {
-  // Stateless JWT logout - just client side removal
   res.status(200).json({ message: 'Logged out' });
 }
 
+/**
+ * Refresh JWT tokens using refresh token.
+ */
 export async function refreshToken(req, res, next) {
   try {
     const { refreshToken } = req.body;
@@ -38,23 +49,37 @@ export async function refreshToken(req, res, next) {
   }
 }
 
+/**
+ * Initiates password reset by generating reset token and emailing the user.
+ */
 export async function forgotPassword(req, res, next) {
   try {
+    // Generate reset token and get user
     const { user, resetToken } = await authService.generatePasswordResetToken(req.body.email);
 
-    // Send email with nodemailer
+    /*
+    // Original email sending functionality (commented out for now)
     await sendEmail({
       to_name: user.name,
       to_email: user.email,
       reset_link: `https://yourfrontend.com/reset-password?token=${resetToken}`,
     });
+    */
 
-    res.json({ message: 'Password reset email sent' });
+    // For now, respond with resetToken for testing purposes
+    res.json({ 
+      message: 'Password reset token generated',
+      resetToken,  // <- expose token for manual testing without email 
+    });
   } catch (err) {
     next(err);
   }
 }
 
+
+/**
+ * Completes password reset by verifying token and updating password.
+ */
 export async function resetPassword(req, res, next) {
   try {
     const { token, password } = req.body;
@@ -65,22 +90,31 @@ export async function resetPassword(req, res, next) {
   }
 }
 
+/**
+ * Returns authenticated user's profile.
+ */
 export async function getProfile(req, res, next) {
   try {
-    const user = req.user; 
+    const user = req.user;
     res.json({ id: user._id, name: user.name, email: user.email, role: user.role });
   } catch (err) {
     next(err);
   }
 }
 
+/**
+ * Changes password securely after validating current password.
+ */
 export async function changePassword(req, res, next) {
   try {
     const userFromToken = req.user;
+
+    // Fetch full user document to access instance methods
     const user = await User.findById(userFromToken._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 
     const { currentPassword, newPassword } = req.body;
+
     const isMatch = await user.comparePassword(currentPassword);
     if (!isMatch) return res.status(400).json({ message: 'Current password is incorrect' });
 

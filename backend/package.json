@@ -5,7 +5,9 @@
   "main": "src/server.js",
   "scripts": {
     "start": "node --experimental-specifier-resolution=node src/server.js",
-    "dev": "nodemon --experimental-specifier-resolution=node src/server.js"
+    "dev": "nodemon --experimental-specifier-resolution=node src/server.js",
+    "db:clear": "node --experimental-specifier-resolution=node src/utils/dbManager.js clear",
+    "db:seed": "node --experimental-specifier-resolution=node src/utils/dbManager.js seed"
   },
   "type": "module",
   "engines": {

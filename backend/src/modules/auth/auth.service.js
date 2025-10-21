@@ -40,20 +40,23 @@ export async function verifyRefreshToken(token) {
 export async function generatePasswordResetToken(email) {
   const user = await User.findOne({ email });
   if (!user) throw new Error('User not found');
+
   const resetToken = crypto.randomBytes(32).toString('hex');
   user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-  user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiry
+  user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
   await user.save();
+
   return { user, resetToken };
 }
 
 export async function resetPassword(token, newPassword) {
-  const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
+  const hashed = crypto.createHash('sha256').update(token).digest('hex');
   const user = await User.findOne({
-    resetPasswordToken: hashedToken,
+    resetPasswordToken: hashed,
     resetPasswordExpires: { $gt: Date.now() },
   });
-  if (!user) throw new Error('Invalid or expired reset token');
+  if (!user) throw new Error('Invalid or expired token');
+
   user.password = newPassword;
   user.resetPasswordToken = undefined;
   user.resetPasswordExpires = undefined;
