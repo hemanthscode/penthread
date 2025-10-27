@@ -1,0 +1,99 @@
+{
+  "info": {
+    "_postman_id": "notifications-module-collection-2025",
+    "name": "BlogPlatform Notifications Module",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for BlogPlatform Notifications endpoints"
+  },
+  "item": [
+    {
+      "name": "Get My Notifications (Author)",
+      "request": {
+        "method": "GET",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{author_access_token}}" }
+        ],
+        "url": "{{base_url}}/notifications"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Fetched notifications', function () { pm.response.to.have.status(200); });",
+              "var notes = pm.response.json();",
+              "if (notes.length > 0) {",
+              "  pm.environment.set('notification_id', notes[0]._id);",
+              "  console.log('Notification ID set:', notes[0]._id);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mark Notification as Read (Author)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{author_access_token}}" }
+        ],
+        "url": "{{base_url}}/notifications/{{notification_id}}/read"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Notification marked read', function () { pm.response.to.have.status(200); });",
+              "var note = pm.response.json();",
+              "pm.expect(note.isRead).to.be.true;"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Mark All Notifications as Read (Author)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{author_access_token}}" }
+        ],
+        "url": "{{base_url}}/notifications/read-all"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('All notifications marked read', function () { pm.response.to.have.status(200); });",
+              "pm.expect(pm.response.json().message).to.include('All notifications marked as read');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Notification (Author)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{author_access_token}}" }
+        ],
+        "url": "{{base_url}}/notifications/{{notification_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Notification deleted', function () { pm.response.to.have.status(200); });",
+              "pm.expect(pm.response.json().message).to.include('Notification deleted');"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

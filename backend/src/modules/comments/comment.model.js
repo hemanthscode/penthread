@@ -1,3 +1,4 @@
+// Mongoose schema for comments with status moderation
 import mongoose from 'mongoose';
 
 const { Schema, model } = mongoose;

@@ -4,7 +4,6 @@ import authMiddleware from '../../middlewares/auth.middleware.js';
 
 const router = Router();
 
-router.get('/', authMiddleware(['admin']), activityController.getActivities);
-router.get('/user/:userId', authMiddleware(['admin']), activityController.getUserActivities);
+router.get('/', authMiddleware(['admin', 'author', 'user']), activityController.getActivities);
 
 export default router;

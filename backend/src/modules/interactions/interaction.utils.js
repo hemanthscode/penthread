@@ -1,4 +1,4 @@
-// Placeholder for interaction utilities - expand as needed
+// Placeholder for interaction-related utilities
 
 export function isValidInteractionAction(action) {
   return ['like', 'favorite', 'view'].includes(action);

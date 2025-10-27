@@ -2,6 +2,7 @@ import jwt from 'jsonwebtoken';
 import config from '../config/index.js';
 import User from '../modules/auth/auth.model.js';
 
+// Role-based authentication and authorization middleware
 export default function authMiddleware(allowedRoles = []) {
   return async (req, res, next) => {
     try {

@@ -1,0 +1,116 @@
+{
+  "info": {
+    "_postman_id": "categories-module-collection-2025",
+    "name": "BlogPlatform Categories Module",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for BlogPlatform Categories CRUD endpoints"
+  },
+  "item": [
+    {
+      "name": "Create Category (Author)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{author_access_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/categories",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"name\": \"Development\", \"description\": \"All about Dev topics.\" }"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Category created', function () { pm.response.to.have.status(201); });",
+              "var category = pm.response.json();",
+              "pm.environment.set('category_id', category._id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get All Categories (Public)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/categories"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Categories fetched', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Category by ID (Public)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/categories/{{category_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Category fetched by ID', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Category (Author)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{author_access_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/categories/{{category_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"description\": \"Updated description for category.\" }"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Category updated', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Category (Admin)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_access_token}}" }
+        ],
+        "url": "{{base_url}}/categories/{{category_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Category deleted', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

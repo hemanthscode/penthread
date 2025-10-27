@@ -1,3 +1,4 @@
+// Auth routes with validation and RBAC middleware
 import { Router } from 'express';
 import * as authController from './auth.controller.js';
 import validate from '../../middlewares/validate.middleware.js';

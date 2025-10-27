@@ -1,3 +1,4 @@
+// Request body validation middleware using Joi schemas
 export default function validate(schema) {
   return (req, res, next) => {
     const validationOptions = { abortEarly: false, allowUnknown: true, stripUnknown: true };

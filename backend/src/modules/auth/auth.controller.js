@@ -1,10 +1,8 @@
+// Auth controller handles registration, login, password reset, profile and token management
 import * as authService from './auth.service.js';
 import { sendEmail } from '../../config/email.js';
 import User from './auth.model.js';
 
-/**
- * Registers a new user with validated input.
- */
 export async function register(req, res, next) {
   try {
     const user = await authService.registerUser(req.body);
@@ -14,9 +12,6 @@ export async function register(req, res, next) {
   }
 }
 
-/**
- * Authenticates user and returns JWT tokens.
- */
 export async function login(req, res, next) {
   try {
     const user = await authService.loginUser(req.body.email, req.body.password);
@@ -27,16 +22,10 @@ export async function login(req, res, next) {
   }
 }
 
-/**
- * Stateless logout endpoint acknowledgment.
- */
 export async function logout(req, res) {
   res.status(200).json({ message: 'Logged out' });
 }
 
-/**
- * Refresh JWT tokens using refresh token.
- */
 export async function refreshToken(req, res, next) {
   try {
     const { refreshToken } = req.body;
@@ -49,16 +38,12 @@ export async function refreshToken(req, res, next) {
   }
 }
 
-/**
- * Initiates password reset by generating reset token and emailing the user.
- */
 export async function forgotPassword(req, res, next) {
   try {
-    // Generate reset token and get user
     const { user, resetToken } = await authService.generatePasswordResetToken(req.body.email);
 
+    // Commented out actual email sending for test build
     /*
-    // Original email sending functionality (commented out for now)
     await sendEmail({
       to_name: user.name,
       to_email: user.email,
@@ -66,20 +51,16 @@ export async function forgotPassword(req, res, next) {
     });
     */
 
-    // For now, respond with resetToken for testing purposes
+    // Return token for manual testing
     res.json({ 
       message: 'Password reset token generated',
-      resetToken,  // <- expose token for manual testing without email 
+      resetToken,
     });
   } catch (err) {
     next(err);
   }
 }
 
-
-/**
- * Completes password reset by verifying token and updating password.
- */
 export async function resetPassword(req, res, next) {
   try {
     const { token, password } = req.body;
@@ -90,9 +71,6 @@ export async function resetPassword(req, res, next) {
   }
 }
 
-/**
- * Returns authenticated user's profile.
- */
 export async function getProfile(req, res, next) {
   try {
     const user = req.user;
@@ -102,14 +80,11 @@ export async function getProfile(req, res, next) {
   }
 }
 
-/**
- * Changes password securely after validating current password.
- */
 export async function changePassword(req, res, next) {
   try {
     const userFromToken = req.user;
 
-    // Fetch full user document to access instance methods
+    // Get full user for instance method access
     const user = await User.findById(userFromToken._id);
     if (!user) return res.status(404).json({ message: 'User not found' });
 

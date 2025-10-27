@@ -18,10 +18,20 @@ export async function getCommentsByPost(postId) {
 }
 
 export async function moderateComment(commentId, action, userId, userRole) {
-  const comment = await Comment.findById(commentId);
+  const comment = await Comment.findById(commentId).populate({
+    path: 'post',
+    select: 'author'
+  });
+
   if (!comment) throw new Error('Comment not found');
 
-  if (userRole === 'author' && comment.post.author.toString() !== userId.toString()) {
+  const postAuthorId = comment.post?.author?.toString();
+
+  // Only admins or the author of the post can moderate
+  const isAdmin = userRole === 'admin';
+  const isAuthorOfPost = userRole === 'author' && postAuthorId === userId.toString();
+
+  if (!isAdmin && !isAuthorOfPost) {
     throw new Error('Not authorized to moderate this comment');
   }
 
@@ -40,14 +50,25 @@ export async function moderateComment(commentId, action, userId, userRole) {
   return comment;
 }
 
+
 export async function deleteComment(commentId, userId, userRole) {
-  const comment = await Comment.findById(commentId);
+  const comment = await Comment.findById(commentId).populate({
+    path: 'post',
+    select: 'author'
+  });
+
   if (!comment) throw new Error('Comment not found');
 
-  if (userRole !== 'admin' && !(userRole === 'author' && comment.post.author.toString() === userId.toString())) {
+  const postAuthorId = comment.post?.author?.toString();
+  const isAdmin = userRole === 'admin';
+  const isAuthorOfPost = userRole === 'author' && postAuthorId === userId.toString();
+  const isCommentOwner = comment.author?.toString() === userId.toString();
+
+  // Admins can delete any, authors can delete comments on their own posts, users can delete their own
+  if (!isAdmin && !isAuthorOfPost && !isCommentOwner) {
     throw new Error('Not authorized to delete this comment');
   }
 
-  await comment.remove();
-  return;
+  await comment.deleteOne(); // ✅ modern Mongoose method
+  return { message: 'Comment deleted successfully' };
 }

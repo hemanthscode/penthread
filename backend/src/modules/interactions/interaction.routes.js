@@ -10,6 +10,6 @@ router.delete('/:postId/like', authMiddleware(['user', 'author', 'admin']), inte
 router.post('/:postId/favorite', authMiddleware(['user', 'author', 'admin']), interactionController.favoritePost);
 router.delete('/:postId/favorite', authMiddleware(['user', 'author', 'admin']), interactionController.favoritePost);
 
-router.post('/:postId/view', interactionController.viewPost); // public
+router.post('/:postId/view', interactionController.viewPost);
 
 export default router;

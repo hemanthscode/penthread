@@ -1,92 +1,206 @@
 /**
- * Multi-purpose MongoDB management script.
- * Supports: clear (delete all collections) and seed (insert base data).
+ * Multi-purpose MongoDB management and seed script
+ * Supports: clear (delete all collections) and seed (insert baseline data)
  * Usage:
- *   npm run db:clear   -> Drops all collections
- *   npm run db:seed    -> Inserts demo or base data
+ *   npm run db:clear   → Clears all collections
+ *   npm run db:seed    → Seeds sample relational data
  */
 
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
-import bcrypt from 'bcryptjs';
 import config from '../config/index.js';
+import bcrypt from 'bcryptjs';
 import User from '../modules/auth/auth.model.js';
+import Post from '../modules/posts/post.model.js';
+import Category from '../modules/categories/category.model.js';
+import Tag from '../modules/tags/tag.model.js';
+import Comment from '../modules/comments/comment.model.js';
+import Interaction from '../modules/interactions/interaction.model.js';
+import Notification from '../modules/notifications/notification.model.js';
+import Activity from '../modules/activity/activity.model.js';
 
 dotenv.config();
 
-// Connect to MongoDB using configuration
 async function connectDB() {
-  try {
-    await mongoose.connect(config.mongoUri, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-    });
-    console.log('✅ Connected to MongoDB');
-  } catch (err) {
-    console.error('❌ DB connection failed:', err.message);
-    process.exit(1);
-  }
+  await mongoose.connect(config.mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  });
+  console.log('✅ MongoDB connected');
 }
 
-// Clear all collections in the database
 async function clearDB() {
-  try {
-    const collections = await mongoose.connection.db.collections();
-    for (const collection of collections) {
-      await collection.deleteMany({});
-    }
-    console.log('🧹 All collections cleared successfully');
-  } catch (err) {
-    console.error('❌ Error clearing DB:', err.message);
+  const collections = await mongoose.connection.db.collections();
+  for (const collection of collections) {
+    await collection.deleteMany({});
   }
+  console.log('🧹 All collections cleared');
 }
 
-// Seed sample or initial data (e.g., default admin user)
 async function seedDB() {
-  try {
-    await clearDB();
+  await clearDB();
 
-    const users = [
-      { name: 'Super Admin', email: 'admin@blogplatform.com', password: 'Admin@123', role: 'admin', isActive: true },
-      { name: 'Author One', email: 'author1@blog.com', password: 'Admin@123', role: 'author', isActive: true },
-      { name: 'Author Two', email: 'author2@blog.com', password: 'Admin@123', role: 'author', isActive: true },
-      { name: 'Regular User', email: 'user1@blog.com', password: 'Admin@123', role: 'user', isActive: true },
-      { name: 'Inactive User', email: 'user2@blog.com', password: 'Admin@123', role: 'user', isActive: false },
-    ];
+  // 1️⃣ USERS
+  const usersData = [
+    { name: 'Admin Master', email: 'admin@blog.com', password: 'Admin@123', role: 'admin', isActive: true },
+    { name: 'Author Alice', email: 'alice.author@blog.com', password: 'Admin@123', role: 'author', isActive: true },
+    { name: 'Author Bob', email: 'bob.author@blog.com', password: 'Admin@123', role: 'author', isActive: true },
+    { name: 'Regular User John', email: 'john.user@blog.com', password: 'User@123', role: 'user', isActive: true },
+    { name: 'Regular User Jane', email: 'jane.user@blog.com', password: 'User@123', role: 'user', isActive: true },
+  ];
 
-    for (const userData of users) {
-      const user = new User(userData);
-      await user.save();  // password will be hashed automatically by pre 'save' hook
-      console.log(`🌱 Created user: ${user.email} (${user.role})`);
-    }
-
-    console.log('✅ Seeding completed. All users created with password "Admin@123".');
-  } catch (err) {
-    console.error('❌ Error seeding DB:', err.message);
+  const users = [];
+  for (const item of usersData) {
+    const user = new User(item);
+    await user.save();
+    users.push(user);
   }
+  console.log('👥 Users seeded');
+
+  // 2️⃣ CATEGORIES
+  const categories = await Category.insertMany([
+    { name: 'Technology', description: 'Latest trends in tech and software' },
+    { name: 'Science', description: 'Scientific discoveries and research updates' },
+    { name: 'Lifestyle', description: 'Daily living hacks, health, and wellness' },
+  ]);
+  console.log('🏷️ Categories seeded');
+
+  // 3️⃣ TAGS
+  const tags = await Tag.insertMany([
+    { name: 'JavaScript' },
+    { name: 'Node.js' },
+    { name: 'AI' },
+    { name: 'Health' },
+    { name: 'Space' },
+  ]);
+  console.log('🔖 Tags seeded');
+
+  // 4️⃣ POSTS
+  const posts = await Post.insertMany([
+    {
+      title: 'Exploring Node.js for Backend Scalability',
+      content: 'Node.js makes it easy to create scalable servers using event-driven architecture...',
+      author: users[1]._id,
+      categories: [categories[0]._id],
+      tags: [tags[0]._id, tags[1]._id],
+      status: 'published',
+      likesCount: 3,
+      favoritesCount: 2,
+      viewsCount: 10,
+    },
+    {
+      title: 'The Future of Artificial Intelligence',
+      content: 'AI advancements are reshaping industries and redefining productivity...',
+      author: users[2]._id,
+      categories: [categories[1]._id],
+      tags: [tags[2]._id],
+      status: 'approved',
+      likesCount: 2,
+      favoritesCount: 1,
+      viewsCount: 8,
+    },
+    {
+      title: 'Healthy Routines for Modern Professionals',
+      content: 'Balancing work and health has become vital in modern corporate culture...',
+      author: users[2]._id,
+      categories: [categories[2]._id],
+      tags: [tags[3]._id],
+      status: 'published',
+      likesCount: 5,
+      favoritesCount: 3,
+      viewsCount: 12,
+    },
+  ]);
+  console.log('📝 Posts seeded');
+
+  // 5️⃣ COMMENTS
+  const comments = await Comment.insertMany([
+    {
+      post: posts[0]._id,
+      author: users[3]._id,
+      content: 'Awesome insight, really helpful 👏!',
+      status: 'approved',
+    },
+    {
+      post: posts[1]._id,
+      author: users[4]._id,
+      content: 'AI truly is the future. Great post.',
+      status: 'approved',
+    },
+    {
+      post: posts[2]._id,
+      author: users[3]._id,
+      content: 'I’ll definitely try these routines. Thanks for sharing!',
+      status: 'approved',
+    },
+  ]);
+  console.log('💬 Comments seeded');
+
+  // 6️⃣ INTERACTIONS
+  const interactions = await Interaction.insertMany([
+    { user: users[3]._id, post: posts[0]._id, liked: true, favorited: false },
+    { user: users[4]._id, post: posts[0]._id, liked: true, favorited: true },
+    { user: users[3]._id, post: posts[1]._id, liked: false, favorited: true },
+  ]);
+  console.log('❤️ Interactions seeded');
+
+  // 7️⃣ NOTIFICATIONS
+  const notifications = await Notification.insertMany([
+    {
+      user: users[1]._id,
+      title: 'New Comment on Your Post',
+      message: `${users[3].name} commented on your post "${posts[0].title}"`,
+      link: `/posts/${posts[0]._id}`,
+    },
+    {
+      user: users[2]._id,
+      title: 'Your Post Approved',
+      message: `Admin ${users[0].name} approved your AI post.`,
+      link: `/posts/${posts[1]._id}`,
+    },
+  ]);
+  console.log('🔔 Notifications seeded');
+
+  // 8️⃣ ACTIVITIES
+  const activities = await Activity.insertMany([
+    {
+      user: users[3]._id,
+      action: 'comment_post',
+      details: `Commented on post "${posts[0].title}"`,
+    },
+    {
+      user: users[4]._id,
+      action: 'like_post',
+      details: `Liked the post "${posts[1].title}"`,
+    },
+    {
+      user: users[1]._id,
+      action: 'publish_post',
+      details: `Published a new post "${posts[0].title}"`,
+    },
+  ]);
+  console.log('📊 Activities seeded');
+
+  console.log('✅ SEEDING COMPLETED SUCCESSFULLY');
 }
 
-
-// Determine operation from CLI arguments
 const operation = process.argv[2];
-
 (async () => {
-  await connectDB();
+  try {
+    await connectDB();
 
-  switch (operation) {
-    case 'clear':
+    if (operation === 'clear') {
       await clearDB();
-      break;
-
-    case 'seed':
+    } else if (operation === 'seed') {
       await seedDB();
-      break;
-
-    default:
-      console.log('Please provide an operation: clear or seed');
+    } else {
+      console.log('Please specify an operation: clear or seed');
+    }
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+  } finally {
+    await mongoose.connection.close();
+    console.log('🔌 Connection closed');
+    process.exit(0);
   }
-
-  await mongoose.connection.close();
-  console.log('🔌 Disconnected from MongoDB');
-  process.exit();
 })();

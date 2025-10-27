@@ -1,4 +1,4 @@
-// Utilities for notification formatting or processing can go here
+// Utilities for notification formatting or processing
 
 export function formatNotification(notification) {
   return {

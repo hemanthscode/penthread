@@ -1,3 +1,4 @@
+// Mongoose Post schema representing blog posts with categories, tags, and interaction counts
 import mongoose from 'mongoose';
 
 const { Schema, model } = mongoose;
@@ -18,7 +19,7 @@ const postSchema = new Schema({
   viewsCount: { type: Number, default: 0 },
 }, { timestamps: true });
 
-// Index text for search
+// Text index for search optimization
 postSchema.index({ title: 'text', content: 'text' });
 
 export default model('Post', postSchema);

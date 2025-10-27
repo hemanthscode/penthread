@@ -1,3 +1,4 @@
+// CORS and API rate limiting configuration
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import config from './index.js';

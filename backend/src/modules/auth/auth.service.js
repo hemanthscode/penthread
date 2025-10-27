@@ -1,3 +1,4 @@
+// Auth service: core user management, JWT tokens, password resets, and verification
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import User from './auth.model.js';
@@ -21,7 +22,8 @@ export async function registerUser(userInput) {
 export async function loginUser(email, password) {
   const user = await User.findOne({ email });
   if (!user || !user.isActive) throw new Error('Invalid email or password');
-  if (!(await user.comparePassword(password))) throw new Error('Invalid email or password');
+  const isValid = await user.comparePassword(password);
+  if (!isValid) throw new Error('Invalid email or password');
   return user;
 }
 
@@ -43,7 +45,7 @@ export async function generatePasswordResetToken(email) {
 
   const resetToken = crypto.randomBytes(32).toString('hex');
   user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
-  user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+  user.resetPasswordExpires = Date.now() + 3600000; // 1 hour expiry
   await user.save();
 
   return { user, resetToken };
@@ -53,7 +55,7 @@ export async function resetPassword(token, newPassword) {
   const hashed = crypto.createHash('sha256').update(token).digest('hex');
   const user = await User.findOne({
     resetPasswordToken: hashed,
-    resetPasswordExpires: { $gt: Date.now() },
+    resetPasswordExpires: { $gt: Date.now() }
   });
   if (!user) throw new Error('Invalid or expired token');
 

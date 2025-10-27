@@ -47,7 +47,7 @@ export async function deletePost(postId, userId, isAdmin = false) {
     throw new Error('Not authorized to delete this post');
   }
 
-  await post.remove();
+  await post.deleteOne();
   return;
 }
 

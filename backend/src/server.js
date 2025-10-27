@@ -1,3 +1,4 @@
+// Main server entry point: Initialize database, Express app, and start server
 import http from 'http';
 import app from './app.js';
 import { init } from './loaders/index.js';
@@ -9,12 +10,11 @@ import logger from './config/logger.js';
     const expressApp = await init();
 
     const server = http.createServer(expressApp);
-
     server.listen(config.port, () => {
       logger.info(`Server running in ${config.env} mode on port ${config.port}`);
     });
 
-    // Handle shutdown signals
+    // Graceful shutdown handling
     const gracefulShutdown = () => {
       logger.info('Shutting down...');
       server.close(() => {

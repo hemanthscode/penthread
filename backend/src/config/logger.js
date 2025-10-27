@@ -1,3 +1,4 @@
+// Winston logger configuration with colorized console and file transports
 import { createLogger, format, transports } from 'winston';
 import config from './index.js';
 

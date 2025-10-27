@@ -1,6 +1,7 @@
 import { scheduleCleanup } from './cleanupJob.js';
 
+// Initialize scheduled jobs here
 export function initJobs() {
   scheduleCleanup();
-  // Add other jobs scheduling here as needed
+  // Additional scheduled jobs can be added here
 }

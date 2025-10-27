@@ -1,8 +1,8 @@
+// Express app loader with essential middlewares and routes
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
 import cors from 'cors';
-import config from '../config/index.js';
 import { corsOptions, apiRateLimiter } from '../config/appConfig.js';
 import routes from './routes.js';
 import logger from '../config/logger.js';
@@ -24,10 +24,10 @@ export default function createExpressApp() {
   // HTTP request logger
   app.use(morgan('combined', { stream: morganStream }));
 
-  // Attach routes
+  // Attach all API routes
   app.use('/api', routes);
 
-  // 404 handler
+  // 404 for unknown routes
   app.use((req, res, next) => {
     res.status(404).json({ message: 'API endpoint not found' });
   });

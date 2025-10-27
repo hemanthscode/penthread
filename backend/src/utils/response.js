@@ -1,3 +1,4 @@
+// Unified success and error response formats
 export function successResponse(res, data, message = '') {
   return res.json({ success: true, message, data });
 }

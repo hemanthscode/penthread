@@ -1,3 +1,4 @@
+// Mongoose schema for user notifications
 import mongoose from 'mongoose';
 
 const { Schema, model } = mongoose;

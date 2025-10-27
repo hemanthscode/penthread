@@ -1,0 +1,131 @@
+{
+  "info": {
+    "_postman_id": "comments-module-collection-2025",
+    "name": "BlogPlatform Comments Module",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for BlogPlatform Comments endpoints, variable-driven and RBAC"
+  },
+  "item": [
+    {
+      "name": "Create Comment on Post (User)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{user_access_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/comments/posts/{{latest_post_id}}/comments",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"content\": \"Great blog post! Learned a lot.\" }"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Comment created', function () { pm.response.to.have.status(201); });",
+              "var comment = pm.response.json();",
+              "pm.environment.set('latest_comment_id', comment._id);",
+              "console.log('Saved latest comment id:', comment._id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Comments for Post (Public)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/comments/posts/{{latest_post_id}}/comments"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Fetched post comments', function () { pm.response.to.have.status(200); });",
+              "var comments = pm.response.json();",
+              "if (comments.length > 0) { pm.environment.set('latest_comment_id', comments[0]._id); }"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Moderate Comment (Approve - Author)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{author_access_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/comments/comments/{{latest_comment_id}}/moderate",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"action\": \"approve\" }"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Comment approved', function () { pm.response.to.have.status(200); });",
+              "var comment = pm.response.json();",
+              "pm.expect(comment.status).to.eql('approved');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Moderate Comment (Reject - Admin)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/comments/comments/{{latest_comment_id}}/moderate",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"action\": \"reject\" }"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Comment rejected', function () { pm.response.to.have.status(200); });",
+              "var comment = pm.response.json();",
+              "pm.expect(comment.status).to.eql('rejected');"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Comment (Admin)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_access_token}}" }
+        ],
+        "url": "{{base_url}}/comments/comments/{{latest_comment_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Comment deleted', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

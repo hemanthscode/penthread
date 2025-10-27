@@ -1,3 +1,4 @@
+// Mongoose User model with password hashing and comparison methods
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 

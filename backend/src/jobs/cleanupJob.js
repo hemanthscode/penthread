@@ -2,7 +2,7 @@ import cron from 'node-cron';
 import Post from '../modules/posts/post.model.js';
 import logger from '../config/logger.js';
 
-// Runs daily at 2:00 AM to remove drafts older than 30 days
+// Cron job: runs daily at 2:00 AM to remove drafts older than 30 days
 export function scheduleCleanup() {
   cron.schedule('0 2 * * *', async () => {
     try {

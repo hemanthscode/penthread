@@ -1,3 +1,4 @@
+// MongoDB connection setup using mongoose
 import mongoose from 'mongoose';
 import config from './index.js';
 import logger from './logger.js';

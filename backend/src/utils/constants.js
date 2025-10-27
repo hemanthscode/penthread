@@ -1,3 +1,4 @@
+// Common constants/enums used throughout the app
 export const ROLES = {
   ADMIN: 'admin',
   AUTHOR: 'author',

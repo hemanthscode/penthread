@@ -1,0 +1,116 @@
+{
+  "info": {
+    "_postman_id": "tags-module-collection-2025",
+    "name": "BlogPlatform Tags Module",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Postman collection for BlogPlatform Tags CRUD endpoints"
+  },
+  "item": [
+    {
+      "name": "Create Tag (Author)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{author_access_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/tags",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"name\": \"Testing\" }"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Tag created', function () { pm.response.to.have.status(201); });",
+              "var tag = pm.response.json();",
+              "pm.environment.set('tag_id', tag._id);"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get All Tags (Public)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/tags"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Tags fetched', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Get Tag by ID (Public)",
+      "request": {
+        "method": "GET",
+        "url": "{{base_url}}/tags/{{tag_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Tag fetched by ID', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Update Tag (Author)",
+      "request": {
+        "method": "PATCH",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{author_access_token}}" },
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{base_url}}/tags/{{tag_id}}",
+        "body": {
+          "mode": "raw",
+          "raw": "{ \"name\": \"UpdatedTag\" }"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Tag updated', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "Delete Tag (Admin)",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          { "key": "Authorization", "value": "Bearer {{admin_access_token}}" }
+        ],
+        "url": "{{base_url}}/tags/{{tag_id}}"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Tag deleted', function () { pm.response.to.have.status(200); });"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

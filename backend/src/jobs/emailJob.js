@@ -2,10 +2,12 @@ import Queue from 'bull';
 import { sendEmail } from '../config/email.js';
 import logger from '../config/logger.js';
 
+// Redis connection configuration for Bull queue
 const emailQueue = new Queue('email', {
-  redis: { host: '127.0.0.1', port: 6379 }, // Adjust redis config as needed
+  redis: { host: '127.0.0.1', port: 6379 }, // Adjust Redis config as needed
 });
 
+// Process email sending jobs asynchronously
 emailQueue.process(async (job) => {
   try {
     const { templateParams } = job.data;
@@ -17,7 +19,7 @@ emailQueue.process(async (job) => {
   }
 });
 
-// Adds email jobs to queue
+// Function to enqueue email jobs
 export function queueEmail(templateParams) {
   return emailQueue.add({ templateParams });
 }

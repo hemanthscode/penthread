@@ -1,3 +1,4 @@
+// Joi schemas for auth endpoints input validation
 import Joi from 'joi';
 
 export const registerSchema = Joi.object({
