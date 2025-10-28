@@ -4,9 +4,14 @@ import rateLimit from 'express-rate-limit';
 import config from './index.js';
 
 export const corsOptions = {
-  origin: ['http://localhost:3000', 'https://yourfrontenddomain.com'],
+  origin: [
+    'http://localhost:5173',           // Vite frontend (local dev)
+    'http://localhost:3000',           // backend default or other frontends
+    'https://yourfrontenddomain.com'   // production frontend domain
+  ],
   credentials: true,
 };
+
 
 export const apiRateLimiter = rateLimit({
   windowMs: config.rateLimitWindowMs,
