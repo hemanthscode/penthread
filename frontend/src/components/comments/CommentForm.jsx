@@ -1,3 +1,4 @@
+// src/components/comments/CommentForm.jsx
 import React, { useState } from 'react';
 
 const CommentForm = ({ onSubmit, placeholder = 'Write a comment...', disabled }) => {
@@ -5,7 +6,8 @@ const CommentForm = ({ onSubmit, placeholder = 'Write a comment...', disabled })
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSubmit(content);
+    if (!content.trim()) return;
+    onSubmit(content.trim());
     setContent('');
   };
 
@@ -18,6 +20,7 @@ const CommentForm = ({ onSubmit, placeholder = 'Write a comment...', disabled })
         onChange={(e) => setContent(e.target.value)}
         disabled={disabled}
         required
+        aria-label="Write a comment"
       />
       <button
         type="submit"

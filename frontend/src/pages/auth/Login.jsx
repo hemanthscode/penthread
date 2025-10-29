@@ -1,3 +1,4 @@
+// src/pages/auth/Login.jsx
 import React, { useState } from 'react';
 import { useAuthContext } from '../../contexts/AuthContext';
 import Button from '../../components/common/Button';
@@ -31,8 +32,21 @@ const Login = () => {
     e.preventDefault();
     try {
       setLoading(true);
-      await login(values);
-      navigate('/'); // adapt later to redirect by role
+      const loggedUser = await login(values); // Login returns user profile now
+      if (loggedUser) {
+        const role = loggedUser.role;
+        if (role === 'admin') {
+          navigate('/admin');
+        } else if (role === 'author') {
+          navigate('/author');
+        } else if (role === 'user') {
+          navigate('/user');
+        } else {
+          navigate('/');
+        }
+      } else {
+        navigate('/');
+      }
     } catch (e) {
       setServerError(e.response?.data?.message || 'Login failed');
     } finally {
@@ -41,41 +55,50 @@ const Login = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 bg-white p-6 rounded shadow">
-      <h2 className="text-2xl font-bold mb-6 text-center">Login</h2>
-      <form onSubmit={onSubmit} className="space-y-4">
-        <Input
-          label="Email"
-          type="email"
-          name="email"
-          value={values.email}
-          onChange={handleChange}
-          error={errors.email}
-        />
-        <Input
-          label="Password"
-          type="password"
-          name="password"
-          value={values.password}
-          onChange={handleChange}
-          error={errors.password}
-        />
-        {serverError && <p className="text-red-600 text-center">{serverError}</p>}
-        <Button type="submit" disabled={loading || Object.keys(errors).length > 0} variant="primary">
-          {loading ? 'Logging in...' : 'Login'}
-        </Button>
-      </form>
-      <p className="mt-4 text-center text-sm text-gray-600">
-        <Link to="/auth/forgot-password" className="text-blue-600 hover:underline">
-          Forgot Password?
-        </Link>
-      </p>
-      <p className="mt-2 text-center text-sm text-gray-600">
-        Don't have an account?{' '}
-        <Link to="/auth/register" className="text-blue-600 hover:underline">
-          Register
-        </Link>
-      </p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-extrabold text-center mb-7">Login</h2>
+        <form onSubmit={onSubmit} className="space-y-6">
+          <Input
+            label="Email"
+            type="email"
+            name="email"
+            value={values.email}
+            onChange={handleChange}
+            error={errors.email}
+            required
+          />
+          <Input
+            label="Password"
+            type="password"
+            name="password"
+            value={values.password}
+            onChange={handleChange}
+            error={errors.password}
+            required
+          />
+          {serverError && <p className="text-red-600 text-center">{serverError}</p>}
+          <Button
+            type="submit"
+            disabled={loading || Object.keys(errors).length > 0}
+            variant="primary"
+            className="w-full"
+          >
+            {loading ? 'Logging in...' : 'Login'}
+          </Button>
+        </form>
+        <div className="mt-6 text-center space-y-3 text-sm text-gray-600">
+          <Link to="/auth/forgot-password" className="text-blue-600 hover:underline block">
+            Forgot Password?
+          </Link>
+          <p>
+            Don't have an account?{' '}
+            <Link to="/auth/register" className="text-blue-600 hover:underline">
+              Register
+            </Link>
+          </p>
+        </div>
+      </div>
     </div>
   );
 };

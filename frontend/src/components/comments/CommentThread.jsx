@@ -1,3 +1,4 @@
+// src/components/comments/CommentThread.jsx
 import React from 'react';
 import CommentItem from './CommentItem';
 

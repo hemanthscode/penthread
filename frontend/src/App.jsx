@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuthContext } from './contexts/AuthContext';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { NotificationProvider } from './contexts/NotificationContext';
 import { UserPreferenceProvider } from './contexts/UserPreferenceContext';
@@ -35,14 +35,26 @@ import PostDetails from './pages/user/PostDetails';
 import UserProfile from './pages/user/Profile';
 import UserNotifications from './pages/user/Notifications';
 
-// PrivateRoute component – moved inside AuthProvider so can call useAuth safely
+const PUBLIC_PATHS = [
+  "/",
+  "/about",
+  "/posts",
+  "/posts/",
+  "/auth/login",
+  "/auth/register",
+  "/auth/forgot-password",
+  "/auth/reset-password"
+];
+
+// PrivateRoute component using useAuthContext hook safely inside AuthProvider tree
 const PrivateRoute = ({ children, requiredRole }) => {
-  const { user, loading } = React.useContext(require('./contexts/AuthContext').AuthContext);
-  
+  const { user, loading } = useAuthContext();
+
   if (loading) return <div>Loading...</div>;
-  if (!user) return <Navigate to="/auth/login" />;
-  if (requiredRole && user.role !== requiredRole) return <Navigate to="/auth/login" />;
-  
+
+  if (!user) return <Navigate to="/auth/login" replace />;
+  if (requiredRole && user.role !== requiredRole) return <Navigate to="/auth/login" replace />;
+
   return children;
 };
 
@@ -55,6 +67,7 @@ const App = () => (
             {/* Public Routes */}
             <Route path="/" element={<Home />} />
             <Route path="/about" element={<About />} />
+            <Route path="/posts/:id" element={<PostDetails />} />
             <Route path="/auth/login" element={<Login />} />
             <Route path="/auth/register" element={<Register />} />
             <Route path="/auth/forgot-password" element={<ForgotPassword />} />
@@ -105,7 +118,6 @@ const App = () => (
             >
               <Route index element={<UserDashboard />} />
               <Route path="posts" element={<UserPosts />} />
-              <Route path="posts/:id" element={<PostDetails />} />
               <Route path="profile" element={<UserProfile />} />
               <Route path="notifications" element={<UserNotifications />} />
             </Route>

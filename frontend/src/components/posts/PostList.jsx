@@ -1,7 +1,7 @@
 import React from 'react';
 import PostCard from './PostCard';
 
-const PostList = ({ posts, onLikeToggle, onFavoriteToggle, userLikes, userFavorites }) => {
+const PostList = ({ posts, onLikeToggle, onFavoriteToggle, userLikes = [], userFavorites = [] }) => {
   if (!posts.length) {
     return <p className="text-center text-gray-500 mt-8">No posts found.</p>;
   }

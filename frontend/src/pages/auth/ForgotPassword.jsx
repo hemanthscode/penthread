@@ -26,23 +26,25 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 bg-white p-6 rounded shadow">
-      <h2 className="text-2xl font-bold mb-6 text-center">Forgot Password</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="Email"
-          type="email"
-          name="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        />
-        {error && <p className="text-red-600">{error}</p>}
-        {status && <p className="text-green-600">{status}</p>}
-        <Button type="submit" disabled={loading}>
-          {loading ? 'Sending...' : 'Send Reset Link'}
-        </Button>
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-extrabold text-center mb-7">Forgot Password</h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Input
+            label="Email"
+            type="email"
+            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          {error && <p className="text-red-600 text-center">{error}</p>}
+          {status && <p className="text-green-600 text-center">{status}</p>}
+          <Button type="submit" disabled={loading} className="w-full">
+            {loading ? 'Sending...' : 'Send Reset Link'}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };

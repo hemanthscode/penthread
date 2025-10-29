@@ -25,7 +25,9 @@ export async function getPost(req, res, next) {
 
 export async function getPosts(req, res, next) {
   try {
-    const filter = { status: { $in: ['approved', 'published'] } };
+    // Only published posts for public route
+    const filter = { status: 'published' };
+
     if (req.query.authorId) filter.author = req.query.authorId;
     if (req.query.categoryId) filter.categories = req.query.categoryId;
     if (req.query.tagId) filter.tags = req.query.tagId;

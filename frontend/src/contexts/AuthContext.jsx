@@ -3,7 +3,6 @@ import * as authService from '../services/authService';
 
 const AuthContext = createContext(null);
 
-// Custom hook to provide auth state + methods
 export const useAuthContext = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error('useAuthContext must be used within AuthProvider');
@@ -12,32 +11,43 @@ export const useAuthContext = () => {
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);  // start loading true
 
+  // Called on app load to restore session if tokens present
   useEffect(() => {
-    // Attempt to load profile on mount
     (async () => {
-      try {
-        const res = await authService.getProfile();
-        setUser(res.data);
-      } catch {
-        setUser(null);
-      } finally {
-        setLoading(false);
+      const token = localStorage.getItem('accessToken');
+      if (token) {
+        try {
+          const profileRes = await authService.getProfile();
+          setUser(profileRes.data);
+        } catch {
+          setUser(null);
+          localStorage.removeItem('accessToken');
+          localStorage.removeItem('refreshToken');
+        }
       }
+      setLoading(false);
     })();
   }, []);
 
+  // Your login function remains mostly the same
   const login = async (credentials) => {
-    const res = await authService.login(credentials);
-    const { accessToken, refreshToken, user: loggedUser } = res.data.tokens
-      ? { ...res.data.tokens, user: res.data.user }
-      : {};
-    if (accessToken) {
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      setUser(loggedUser);
+    setLoading(true);
+    try {
+      const res = await authService.login(credentials);
+      const { accessToken, refreshToken } = res.data.tokens ?? {};
+      if (accessToken) {
+        localStorage.setItem('accessToken', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
+        const profileRes = await authService.getProfile();
+        setUser(profileRes.data);
+        return profileRes.data;
+      }
+    } finally {
+      setLoading(false);
     }
+    return null;
   };
 
   const logout = async () => {

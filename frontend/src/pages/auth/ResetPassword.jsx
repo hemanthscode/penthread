@@ -62,32 +62,34 @@ const ResetPassword = () => {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-20 bg-white p-6 rounded shadow">
-      <h2 className="text-2xl font-bold mb-6 text-center">Reset Password</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <Input
-          label="New Password"
-          type="password"
-          name="password"
-          value={form.password}
-          onChange={handleChange}
-          error={errors.password}
-          required
-        />
-        <Input
-          label="Confirm Password"
-          type="password"
-          name="confirmPassword"
-          value={form.confirmPassword}
-          onChange={handleChange}
-          error={errors.confirmPassword}
-          required
-        />
-        {serverError && <p className="text-red-600">{serverError}</p>}
-        <Button type="submit" disabled={loading || Object.keys(errors).length}>
-          {loading ? 'Resetting...' : 'Reset Password'}
-        </Button>
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg">
+        <h2 className="text-3xl font-extrabold text-center mb-7">Reset Password</h2>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Input
+            label="New Password"
+            type="password"
+            name="password"
+            value={form.password}
+            onChange={handleChange}
+            error={errors.password}
+            required
+          />
+          <Input
+            label="Confirm Password"
+            type="password"
+            name="confirmPassword"
+            value={form.confirmPassword}
+            onChange={handleChange}
+            error={errors.confirmPassword}
+            required
+          />
+          {serverError && <p className="text-red-600 text-center">{serverError}</p>}
+          <Button type="submit" disabled={loading || Object.keys(errors).length} className="w-full">
+            {loading ? 'Resetting...' : 'Reset Password'}
+          </Button>
+        </form>
+      </div>
     </div>
   );
 };

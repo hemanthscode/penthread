@@ -7,29 +7,22 @@ export const useAdminDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchSummary = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await dashboardService.fetchAdminSummary();
-      setSummary(res.data);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStats = async () => {
-    setLoading(true);
-    try {
-      const res = await dashboardService.fetchAdminStats();
-      setStats(res.data);
+      const [resSummary, resStats] = await Promise.all([
+        dashboardService.fetchAdminSummary(),
+        dashboardService.fetchAdminStats(),
+      ]);
+      setSummary(resSummary.data);
+      setStats(resStats.data);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSummary();
-    fetchStats();
+    fetchData();
   }, []);
 
   return { summary, stats, loading };
@@ -40,29 +33,22 @@ export const useAuthorDashboard = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchSummary = async () => {
+  const fetchData = async () => {
     setLoading(true);
     try {
-      const res = await dashboardService.fetchAuthorSummary();
-      setSummary(res.data);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const fetchStats = async () => {
-    setLoading(true);
-    try {
-      const res = await dashboardService.fetchAuthorStats();
-      setStats(res.data);
+      const [resSummary, resStats] = await Promise.all([
+        dashboardService.fetchAuthorSummary(),
+        dashboardService.fetchAuthorStats(),
+      ]);
+      setSummary(resSummary.data);
+      setStats(resStats.data);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchSummary();
-    fetchStats();
+    fetchData();
   }, []);
 
   return { summary, stats, loading };
