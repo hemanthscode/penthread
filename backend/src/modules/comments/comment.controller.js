@@ -6,9 +6,9 @@ export async function createComment(req, res, next) {
     const comment = await commentService.createComment({
       postId,
       authorId: req.user._id,
-      content: req.body.content
+      content: req.body.content,
     });
-    res.status(201).json(comment);
+    res.status(201).json({ success: true, data: comment });
   } catch (err) {
     next(err);
   }
@@ -18,7 +18,7 @@ export async function getComments(req, res, next) {
   try {
     const { postId } = req.params;
     const comments = await commentService.getCommentsByPost(postId);
-    res.json(comments);
+    res.json({ success: true, data: comments });
   } catch (err) {
     next(err);
   }
@@ -27,12 +27,9 @@ export async function getComments(req, res, next) {
 export async function moderateComment(req, res, next) {
   try {
     const { commentId } = req.params;
-    const action = req.body.action; // 'approve' or 'reject'
-    const userId = req.user._id;
-    const userRole = req.user.role;
-
-    const comment = await commentService.moderateComment(commentId, action, userId, userRole);
-    res.json(comment);
+    const { action } = req.body;
+    const comment = await commentService.moderateComment(commentId, action, req.user._id, req.user.role);
+    res.json({ success: true, data: comment });
   } catch (err) {
     next(err);
   }
@@ -42,7 +39,7 @@ export async function deleteComment(req, res, next) {
   try {
     const { commentId } = req.params;
     await commentService.deleteComment(commentId, req.user._id, req.user.role);
-    res.json({ message: 'Comment deleted' });
+    res.json({ success: true, message: 'Comment deleted' });
   } catch (err) {
     next(err);
   }

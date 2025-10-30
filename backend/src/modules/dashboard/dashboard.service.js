@@ -1,7 +1,11 @@
 import Post from '../posts/post.model.js';
 import User from '../users/user.model.js';
 import Comment from '../comments/comment.model.js';
+import Interaction from '../interactions/interaction.model.js';
 
+/**
+ * Admin summary: global counts of users, posts, comments
+ */
 export async function getAdminSummary() {
   const totalUsers = await User.countDocuments();
   const totalPosts = await Post.countDocuments();
@@ -9,6 +13,9 @@ export async function getAdminSummary() {
   return { totalUsers, totalPosts, totalComments };
 }
 
+/**
+ * Admin stats: grouped posts by status and users by role
+ */
 export async function getAdminStats() {
   const postsPerStatus = await Post.aggregate([
     { $group: { _id: '$status', count: { $sum: 1 } } },
@@ -19,14 +26,40 @@ export async function getAdminStats() {
   return { postsPerStatus, usersPerRole };
 }
 
+/**
+ * Author summary: post counts & comments on their posts
+ */
 export async function getAuthorSummary(userId) {
   const totalPosts = await Post.countDocuments({ author: userId });
   const publishedPosts = await Post.countDocuments({ author: userId, status: 'published' });
   const totalComments = await Comment.countDocuments({ 'post.author': userId });
 
-  return { totalPosts, publishedPosts, totalComments };
+  const totalLikes = await Interaction.aggregate([
+    { $match: { liked: true } },
+    {
+      $lookup: {
+        from: 'posts',
+        localField: 'post',
+        foreignField: '_id',
+        as: 'postDetails',
+      },
+    },
+    { $unwind: '$postDetails' },
+    { $match: { 'postDetails.author': userId } },
+    { $count: 'likesCount' },
+  ]);
+
+  return {
+    totalPosts,
+    publishedPosts,
+    totalComments,
+    totalLikes: totalLikes[0]?.likesCount || 0,
+  };
 }
 
+/**
+ * Author stats: daily posts counts to show trends
+ */
 export async function getAuthorStats(userId) {
   const postsByDate = await Post.aggregate([
     { $match: { author: userId } },
@@ -41,13 +74,14 @@ export async function getAuthorStats(userId) {
   return { postsByDate };
 }
 
+/**
+ * Basic user summary with enriched favorites and comments count
+ */
 export async function getUserSummary(userId) {
-  // For user, basic stats such as favorites count and comments count
-  // Assuming favorites are tracked in interactions
-
-  // Placeholder data as an example
+  const favoritePostsCount = await Interaction.countDocuments({ user: userId, favorited: true });
+  const commentsMade = await Comment.countDocuments({ author: userId });
   return {
-    favoritePostsCount: 0,
-    commentsMade: 0,
+    favoritePostsCount,
+    commentsMade,
   };
 }

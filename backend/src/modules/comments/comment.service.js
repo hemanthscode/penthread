@@ -1,5 +1,8 @@
 import Comment from './comment.model.js';
 
+/**
+ * Create new comment with pending status
+ */
 export async function createComment({ postId, authorId, content }) {
   const comment = new Comment({
     post: postId,
@@ -8,26 +11,31 @@ export async function createComment({ postId, authorId, content }) {
     status: 'pending',
   });
   await comment.save();
-  return comment;
+  return comment.populate('author', 'name role');
 }
 
+/**
+ * Retrieve approved comments by post, newest first
+ */
 export async function getCommentsByPost(postId) {
   return Comment.find({ post: postId, status: 'approved' })
     .populate('author', 'name role')
     .sort({ createdAt: -1 });
 }
 
+/**
+ * Moderate comment status by admin or post author only
+ */
 export async function moderateComment(commentId, action, userId, userRole) {
   const comment = await Comment.findById(commentId).populate({
     path: 'post',
-    select: 'author'
+    select: 'author',
   });
 
   if (!comment) throw new Error('Comment not found');
 
   const postAuthorId = comment.post?.author?.toString();
 
-  // Only admins or the author of the post can moderate
   const isAdmin = userRole === 'admin';
   const isAuthorOfPost = userRole === 'author' && postAuthorId === userId.toString();
 
@@ -47,14 +55,16 @@ export async function moderateComment(commentId, action, userId, userRole) {
   }
 
   await comment.save();
-  return comment;
+  return comment.populate('author', 'name role');
 }
 
-
+/**
+ * Delete comment with complex role checks
+ */
 export async function deleteComment(commentId, userId, userRole) {
   const comment = await Comment.findById(commentId).populate({
     path: 'post',
-    select: 'author'
+    select: 'author',
   });
 
   if (!comment) throw new Error('Comment not found');
@@ -64,11 +74,10 @@ export async function deleteComment(commentId, userId, userRole) {
   const isAuthorOfPost = userRole === 'author' && postAuthorId === userId.toString();
   const isCommentOwner = comment.author?.toString() === userId.toString();
 
-  // Admins can delete any, authors can delete comments on their own posts, users can delete their own
   if (!isAdmin && !isAuthorOfPost && !isCommentOwner) {
     throw new Error('Not authorized to delete this comment');
   }
 
-  await comment.deleteOne(); // ✅ modern Mongoose method
+  await comment.deleteOne();
   return { message: 'Comment deleted successfully' };
 }

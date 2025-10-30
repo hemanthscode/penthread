@@ -1,12 +1,20 @@
-// Request body validation middleware using Joi schemas
-export default function validate(schema) {
+export default function validate(schema, property = 'body') {
   return (req, res, next) => {
-    const validationOptions = { abortEarly: false, allowUnknown: true, stripUnknown: true };
-    const { error, value } = schema.validate(req.body, validationOptions);
+    const { error, value } = schema.validate(req[property], {
+      abortEarly: false,
+      allowUnknown: true,
+      stripUnknown: true,
+    });
+
     if (error) {
-      return res.status(400).json({ message: 'Validation failed', details: error.details.map(d => d.message) });
+      return res.status(400).json({
+        success: false,
+        message: 'Validation failed',
+        details: error.details.map(d => d.message),
+      });
     }
-    req.body = value;
+
+    req[property] = value;
     next();
   };
 }

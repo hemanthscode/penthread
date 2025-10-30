@@ -1,5 +1,3 @@
-// Utilities for notification formatting or processing
-
 export function formatNotification(notification) {
   return {
     id: notification._id,

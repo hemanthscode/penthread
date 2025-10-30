@@ -2,10 +2,10 @@ export function formatPostSummary(post) {
   return {
     id: post._id,
     title: post.title,
-    author: post.author.name,
+    author: post.author?.name || 'Unknown',
     createdAt: post.createdAt,
     status: post.status,
   };
 }
 
-// Additional utilities can be added here later.
+// Additional post-specific helpers can be added here later.

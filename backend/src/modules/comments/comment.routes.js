@@ -6,16 +6,9 @@ import { createCommentSchema, moderateCommentSchema } from './comment.validators
 
 const router = Router({ mergeParams: true });
 
-// Anyone can get approved comments
 router.get('/posts/:postId/comments', commentController.getComments);
-
-// Authenticated users can comment
 router.post('/posts/:postId/comments', authMiddleware(['user', 'author', 'admin']), validate(createCommentSchema), commentController.createComment);
-
-// Authors moderate comments on their posts
 router.patch('/comments/:commentId/moderate', authMiddleware(['author', 'admin']), validate(moderateCommentSchema), commentController.moderateComment);
-
-// Admin or authors can delete comments accordingly
 router.delete('/comments/:commentId', authMiddleware(['author', 'admin']), commentController.deleteComment);
 
 export default router;

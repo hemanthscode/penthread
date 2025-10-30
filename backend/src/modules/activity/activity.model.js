@@ -1,4 +1,3 @@
-// Mongoose schema for logging user activities/actions
 import mongoose from 'mongoose';
 
 const { Schema, model } = mongoose;

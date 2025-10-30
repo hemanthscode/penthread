@@ -1,7 +1,9 @@
 import { scheduleCleanup } from './cleanupJob.js';
 
-// Initialize scheduled jobs here
+/**
+ * Initialize all background jobs and scheduled tasks here
+ */
 export function initJobs() {
   scheduleCleanup();
-  // Additional scheduled jobs can be added here
+  // Add additional job initializations below as needed
 }

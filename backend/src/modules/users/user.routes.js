@@ -6,15 +6,16 @@ import { updateUserSchema, updateRoleSchema, updateStatusSchema, updateProfileSc
 
 const router = Router();
 
+// Admin-only routes
 router.get('/', authMiddleware(['admin']), userController.getUsers);
 router.get('/:userId', authMiddleware(['admin']), userController.getUser);
 router.patch('/:userId', authMiddleware(['admin']), validate(updateUserSchema), userController.updateUser);
 router.delete('/:userId', authMiddleware(['admin']), userController.deleteUser);
-
-router.get('/profile/me', authMiddleware(['admin', 'author', 'user']), userController.getProfile);
-router.patch('/profile/me', authMiddleware(['admin', 'author', 'user']), validate(updateProfileSchema), userController.updateProfile);
-
 router.patch('/:userId/role', authMiddleware(['admin']), validate(updateRoleSchema), userController.updateRole);
 router.patch('/:userId/status', authMiddleware(['admin']), validate(updateStatusSchema), userController.updateStatus);
+
+// Authenticated (any role) user profile routes
+router.get('/profile/me', authMiddleware(['admin', 'author', 'user']), userController.getProfile);
+router.patch('/profile/me', authMiddleware(['admin', 'author', 'user']), validate(updateProfileSchema), userController.updateProfile);
 
 export default router;

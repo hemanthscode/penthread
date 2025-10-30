@@ -6,9 +6,11 @@ import { createCategorySchema, updateCategorySchema } from './category.validator
 
 const router = Router();
 
+// Public read endpoints
 router.get('/', categoryController.getCategories);
 router.get('/:id', categoryController.getCategory);
 
+// Protected create/update by admin or author; delete only by admin
 router.post('/', authMiddleware(['admin', 'author']), validate(createCategorySchema), categoryController.createCategory);
 router.patch('/:id', authMiddleware(['admin', 'author']), validate(updateCategorySchema), categoryController.updateCategory);
 router.delete('/:id', authMiddleware(['admin']), categoryController.deleteCategory);

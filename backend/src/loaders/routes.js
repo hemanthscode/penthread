@@ -1,4 +1,3 @@
-// Aggregates and exports all module route handlers
 import { Router } from 'express';
 
 import authRoutes from '../modules/auth/auth.routes.js';

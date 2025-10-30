@@ -1,6 +1,7 @@
-// Placeholder for file upload or management utilities (e.g., multer configurations)
-
+/**
+ * Middleware placeholder for file upload handling (e.g., multer)
+ */
 export function handleFileUpload(req, res, next) {
-  // Implementation can be added based on project needs
+  // Extend with multer or other strategies as project needs grow
   next();
 }

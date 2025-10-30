@@ -1,4 +1,3 @@
-// Mongoose User model with password hashing and comparison methods
 import mongoose from 'mongoose';
 import bcrypt from 'bcryptjs';
 
@@ -16,7 +15,7 @@ const userSchema = new Schema({
   resetPasswordExpires: Date,
 }, { timestamps: true });
 
-// Hash password before save if modified
+// Password hashing before saving
 userSchema.pre('save', async function (next) {
   if (!this.isModified('password')) return next();
   const salt = await bcrypt.genSalt(10);
@@ -24,8 +23,8 @@ userSchema.pre('save', async function (next) {
   next();
 });
 
-// Compare password instance method
-userSchema.methods.comparePassword = async function (candidatePassword) {
+// Compare given password with stored hash
+userSchema.methods.comparePassword = function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 

@@ -1,4 +1,3 @@
-// Express app loader with essential middlewares and routes
 import express from 'express';
 import helmet from 'helmet';
 import morgan from 'morgan';
@@ -7,7 +6,7 @@ import { corsOptions, apiRateLimiter } from '../config/appConfig.js';
 import routes from './routes.js';
 import logger from '../config/logger.js';
 
-// Morgan stream for Winston integration
+// Integrate Morgan HTTP logger with Winston
 const morganStream = {
   write: (message) => logger.info(message.trim()),
 };
@@ -21,21 +20,23 @@ export default function createExpressApp() {
   app.use(cors(corsOptions));
   app.use(apiRateLimiter);
 
-  // HTTP request logger
   app.use(morgan('combined', { stream: morganStream }));
 
-  // Attach all API routes
+  // API routes under /api prefix
   app.use('/api', routes);
 
-  // 404 for unknown routes
+  // 404 handler for unknown API endpoints
   app.use((req, res, next) => {
     res.status(404).json({ message: 'API endpoint not found' });
   });
 
-  // Global error handler
+  // Global error handler middleware
   app.use((err, req, res, next) => {
     logger.error(err);
-    res.status(err.status || 500).json({ message: err.message || 'Internal Server Error' });
+    res.status(err.status || 500).json({
+      message: err.message || 'Internal Server Error',
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    });
   });
 
   return app;
