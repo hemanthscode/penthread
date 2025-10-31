@@ -1,11 +1,30 @@
-import { api } from '../utils';
+import api from './api';
 
-export const fetchCategories = () => api.get('/categories');
+class CategoryService {
+  async getCategories() {
+    const response = await api.get('/categories');
+    return response.data;
+  }
 
-export const fetchCategoryById = (id) => api.get(`/categories/${id}`);
+  async getCategory(categoryId) {
+    const response = await api.get(`/categories/${categoryId}`);
+    return response.data;
+  }
 
-export const createCategory = (data) => api.post('/categories', data);
+  async createCategory(categoryData) {
+    const response = await api.post('/categories', categoryData);
+    return response.data;
+  }
 
-export const updateCategory = (id, data) => api.patch(`/categories/${id}`, data);
+  async updateCategory(categoryId, categoryData) {
+    const response = await api.patch(`/categories/${categoryId}`, categoryData);
+    return response.data;
+  }
 
-export const deleteCategory = (id) => api.delete(`/categories/${id}`);
+  async deleteCategory(categoryId) {
+    const response = await api.delete(`/categories/${categoryId}`);
+    return response.data;
+  }
+}
+
+export default new CategoryService();

@@ -1,95 +1,161 @@
-import React, { useState } from 'react';
-import { useSearchParams, useNavigate } from 'react-router-dom';
+// src/pages/auth/ResetPassword.jsx
+import { useState } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Lock, BookOpen, Eye, EyeOff } from 'lucide-react';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import * as authService from '../../services/authService';
-import * as yup from 'yup';
-
-const passwordSchema = yup.object({
-  password: yup.string().min(6).required(),
-  confirmPassword: yup.string()
-    .oneOf([yup.ref('password'), null], 'Passwords must match')
-    .required(),
-});
+import Alert from '../../components/common/Alert';
+import { ROUTES } from '../../utils/constants';
+import authService from '../../services/authService';
+import useForm from '../../hooks/useForm';
 
 const ResetPassword = () => {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-
+  const [searchParams] = useSearchParams();
   const token = searchParams.get('token');
+  const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
 
-  const [form, setForm] = useState({ password: '', confirmPassword: '' });
-  const [errors, setErrors] = useState({});
-  const [serverError, setServerError] = useState('');
-  const [loading, setLoading] = useState(false);
-
-  const validate = () => {
-    try {
-      passwordSchema.validateSync(form, { abortEarly: false });
-      setErrors({});
-      return true;
-    } catch (err) {
-      const newErrors = {};
-      err.inner.forEach(({ path, message }) => (newErrors[path] = message));
-      setErrors(newErrors);
-      return false;
+  const validate = (values) => {
+    const errors = {};
+    if (!values.password) {
+      errors.password = 'Password is required';
+    } else if (values.password.length < 8) {
+      errors.password = 'Password must be at least 8 characters';
     }
+
+    if (!values.confirmPassword) {
+      errors.confirmPassword = 'Please confirm your password';
+    } else if (values.password !== values.confirmPassword) {
+      errors.confirmPassword = 'Passwords do not match';
+    }
+
+    return errors;
   };
 
-  const handleChange = (e) => {
-    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-  };
+  const { values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting } =
+    useForm({ password: '', confirmPassword: '' }, validate);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const onSubmit = async (formValues) => {
+    setError('');
     if (!token) {
-      setServerError('Invalid or missing reset token.');
+      setError('Invalid or missing reset token');
       return;
     }
-    if (!validate()) return;
-
-    setLoading(true);
-    setServerError('');
 
     try {
-      await authService.resetPassword(token, form.password);
-      navigate('/auth/login');
-    } catch (e) {
-      setServerError(e.response?.data?.message || 'Reset failed');
-    } finally {
-      setLoading(false);
+      await authService.resetPassword(token, formValues.password);
+      setSuccess(true);
+      setTimeout(() => {
+        navigate(ROUTES.LOGIN);
+      }, 2000);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to reset password. Please try again.');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg">
-        <h2 className="text-3xl font-extrabold text-center mb-7">Reset Password</h2>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Input
-            label="New Password"
-            type="password"
-            name="password"
-            value={form.password}
-            onChange={handleChange}
-            error={errors.password}
-            required
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-md w-full space-y-8"
+      >
+        {/* Logo and Title */}
+        <div className="text-center">
+          <div className="flex justify-center">
+            <BookOpen className="h-12 w-12 text-primary-600 dark:text-primary-400" />
+          </div>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Reset your password
+          </h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Enter your new password below
+          </p>
+        </div>
+
+        {/* Success Alert */}
+        {success && (
+          <Alert
+            type="success"
+            title="Password reset successful!"
+            message="Redirecting to login page..."
           />
-          <Input
-            label="Confirm Password"
-            type="password"
-            name="confirmPassword"
-            value={form.confirmPassword}
-            onChange={handleChange}
-            error={errors.confirmPassword}
-            required
-          />
-          {serverError && <p className="text-red-600 text-center">{serverError}</p>}
-          <Button type="submit" disabled={loading || Object.keys(errors).length} className="w-full">
-            {loading ? 'Resetting...' : 'Reset Password'}
-          </Button>
-        </form>
-      </div>
+        )}
+
+        {/* Error Alert */}
+        {error && (
+          <Alert type="error" message={error} onClose={() => setError('')} />
+        )}
+
+        {/* Reset Password Form */}
+        {!success && (
+          <form onSubmit={(e) => handleSubmit(onSubmit)(e)} className="mt-8 space-y-6">
+            <div className="space-y-4">
+              <div className="relative">
+                <Input
+                  label="New password"
+                  type={showPassword ? 'text' : 'password'}
+                  name="password"
+                  value={values.password}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  error={touched.password && errors.password}
+                  icon={Lock}
+                  placeholder="Enter new password"
+                  helperText="Must be at least 8 characters"
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
+                  ) : (
+                    <Eye className="h-5 w-5" />
+                  )}
+                </button>
+              </div>
+
+              <Input
+                label="Confirm new password"
+                type={showPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                value={values.confirmPassword}
+                onChange={handleChange}
+                onBlur={handleBlur}
+                error={touched.confirmPassword && errors.confirmPassword}
+                icon={Lock}
+                placeholder="Confirm new password"
+                required
+              />
+            </div>
+
+            <Button
+              type="submit"
+              variant="primary"
+              fullWidth
+              loading={isSubmitting}
+              disabled={isSubmitting}
+            >
+              Reset password
+            </Button>
+          </form>
+        )}
+
+        <div className="text-center">
+          <Link
+            to={ROUTES.LOGIN}
+            className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
+          >
+            Back to login
+          </Link>
+        </div>
+      </motion.div>
     </div>
   );
 };

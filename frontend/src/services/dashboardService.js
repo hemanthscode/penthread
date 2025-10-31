@@ -1,11 +1,30 @@
-import { api } from '../utils';
+import api from './api';
 
-export const fetchAdminSummary = () => api.get('/dashboard/admin/summary');
+class DashboardService {
+  async getAdminSummary() {
+    const response = await api.get('/dashboard/admin/summary');
+    return response.data;
+  }
 
-export const fetchAdminStats = () => api.get('/dashboard/admin/stats');
+  async getAdminStats() {
+    const response = await api.get('/dashboard/admin/stats');
+    return response.data;
+  }
 
-export const fetchAuthorSummary = () => api.get('/dashboard/author/summary');
+  async getAuthorSummary() {
+    const response = await api.get('/dashboard/author/summary');
+    return response.data;
+  }
 
-export const fetchAuthorStats = () => api.get('/dashboard/author/stats');
+  async getAuthorStats() {
+    const response = await api.get('/dashboard/author/stats');
+    return response.data;
+  }
 
-export const fetchUserSummary = () => api.get('/dashboard/user/summary');
+  async getUserSummary() {
+    const response = await api.get('/dashboard/user/summary');
+    return response.data;
+  }
+}
+
+export default new DashboardService();

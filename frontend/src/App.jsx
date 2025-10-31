@@ -1,134 +1,183 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider, useAuthContext } from './contexts/AuthContext';
-import { ThemeProvider } from './contexts/ThemeContext';
-import { NotificationProvider } from './contexts/NotificationContext';
-import { UserPreferenceProvider } from './contexts/UserPreferenceContext';
+// src/App.jsx - Update the routes section
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
+import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import {
+  MainLayout,
+  DashboardLayout,
+  ProtectedRoute,
+  PublicRoute,
+} from './components/layout';
 
-import { AdminLayout, AuthorLayout, UserLayout } from './components/layouts';
+// Auth Pages
+import { Login, Register, ForgotPassword, ResetPassword } from './pages/auth';
 
-import Home from './pages/misc/Home';
-import About from './pages/misc/About';
-import NotFound from './pages/misc/NotFound';
+// Post Pages
+import { PostList, PostDetail, CreatePost, EditPost } from './pages/posts';
 
-import Login from './pages/auth/Login';
-import Register from './pages/auth/Register';
-import ForgotPassword from './pages/auth/ForgotPassword';
-import ResetPassword from './pages/auth/ResetPassword';
+// Dashboard Pages
+import { Dashboard } from './pages/dashboard';
 
-import AdminDashboard from './pages/admin/Dashboard';
-import UsersManagement from './pages/admin/User';
-import AdminCategories from './pages/admin/Categories';
-import AdminTags from './pages/admin/Tags';
-import PostsManagement from './pages/admin/PostsManagement';
-import AdminNotifications from './pages/admin/Notifications';
+// Profile & Settings
+import { Profile } from './pages/profile';
 
-import AuthorDashboard from './pages/author/Dashboard';
-import AuthorPosts from './pages/author/Posts';
-import AuthorPostEditor from './pages/author/PostEditor';
-import AuthorCommentsModeration from './pages/author/CommentsModeration';
-import AuthorNotifications from './pages/author/Notifications';
+// User Management
+import { UserList } from './pages/users';
 
-import UserDashboard from './pages/user/Dashboard';
-import UserPosts from './pages/user/Posts';
-import PostDetails from './pages/user/PostDetails';
-import UserProfile from './pages/user/Profile';
-import UserNotifications from './pages/user/Notifications';
+// Notifications
+import { Notifications } from './pages/notifications';
 
-const PUBLIC_PATHS = [
-  "/",
-  "/about",
-  "/posts",
-  "/posts/",
-  "/auth/login",
-  "/auth/register",
-  "/auth/forgot-password",
-  "/auth/reset-password"
-];
+// Categories & Tags
+import { CategoryList } from './pages/categories';
+import { TagList } from './pages/tags';
 
-// PrivateRoute component using useAuthContext hook safely inside AuthProvider tree
-const PrivateRoute = ({ children, requiredRole }) => {
-  const { user, loading } = useAuthContext();
+// Home Page
+import Home from './pages/Home';
 
-  if (loading) return <div>Loading...</div>;
+// 404 Page
+import NotFound from './pages/NotFound';
 
-  if (!user) return <Navigate to="/auth/login" replace />;
-  if (requiredRole && user.role !== requiredRole) return <Navigate to="/auth/login" replace />;
+// Constants
+import { ROUTES, ROLES } from './utils/constants';
 
-  return children;
-};
+function App() {
+  return (
+    <Router>
+      <ThemeProvider>
+        <AuthProvider>
+          <Toaster
+            position="top-right"
+            toastOptions={{
+              duration: 3000,
+              style: {
+                background: 'var(--color-surface)',
+                color: 'var(--color-text)',
+                border: '1px solid var(--color-border)',
+              },
+              success: {
+                iconTheme: {
+                  primary: 'var(--color-success)',
+                  secondary: 'var(--color-surface)',
+                },
+              },
+              error: {
+                iconTheme: {
+                  primary: 'var(--color-error)',
+                  secondary: 'var(--color-surface)',
+                },
+              },
+            }}
+          />
 
-const App = () => (
-  <AuthProvider>
-    <ThemeProvider>
-      <NotificationProvider>
-        <UserPreferenceProvider>
           <Routes>
             {/* Public Routes */}
-            <Route path="/" element={<Home />} />
-            <Route path="/about" element={<About />} />
-            <Route path="/posts/:id" element={<PostDetails />} />
-            <Route path="/auth/login" element={<Login />} />
-            <Route path="/auth/register" element={<Register />} />
-            <Route path="/auth/forgot-password" element={<ForgotPassword />} />
-            <Route path="/auth/reset-password" element={<ResetPassword />} />
-
-            {/* Admin Routes */}
-            <Route
-              path="/admin/*"
-              element={
-                <PrivateRoute requiredRole="admin">
-                  <AdminLayout />
-                </PrivateRoute>
-              }
-            >
-              <Route index element={<AdminDashboard />} />
-              <Route path="users" element={<UsersManagement />} />
-              <Route path="categories" element={<AdminCategories />} />
-              <Route path="tags" element={<AdminTags />} />
-              <Route path="posts" element={<PostsManagement />} />
-              <Route path="notifications" element={<AdminNotifications />} />
+            <Route element={<MainLayout />}>
+              <Route path={ROUTES.HOME} element={<Home />} />
+              <Route path={ROUTES.POSTS} element={<PostList />} />
+              <Route path={ROUTES.POST_DETAIL} element={<PostDetail />} />
             </Route>
 
-            {/* Author Routes */}
+            {/* Auth Routes (Restricted - redirect if authenticated) */}
             <Route
-              path="/author/*"
+              path={ROUTES.LOGIN}
               element={
-                <PrivateRoute requiredRole="author">
-                  <AuthorLayout />
-                </PrivateRoute>
+                <PublicRoute restricted>
+                  <Login />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path={ROUTES.REGISTER}
+              element={
+                <PublicRoute restricted>
+                  <Register />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path={ROUTES.FORGOT_PASSWORD}
+              element={
+                <PublicRoute restricted>
+                  <ForgotPassword />
+                </PublicRoute>
+              }
+            />
+            <Route
+              path={ROUTES.RESET_PASSWORD}
+              element={
+                <PublicRoute restricted>
+                  <ResetPassword />
+                </PublicRoute>
+              }
+            />
+
+            {/* Protected Routes - Dashboard Layout */}
+            <Route
+              element={
+                <ProtectedRoute>
+                  <DashboardLayout />
+                </ProtectedRoute>
               }
             >
-              <Route index element={<AuthorDashboard />} />
-              <Route path="posts" element={<AuthorPosts />} />
-              <Route path="posts/new" element={<AuthorPostEditor />} />
-              <Route path="posts/edit/:id" element={<AuthorPostEditor />} />
-              <Route path="comments" element={<AuthorCommentsModeration />} />
-              <Route path="notifications" element={<AuthorNotifications />} />
+              <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
+              <Route path={ROUTES.PROFILE} element={<Profile />} />
+              <Route path={ROUTES.NOTIFICATIONS} element={<Notifications />} />
+
+              {/* Categories & Tags - Author/Admin only */}
+              <Route
+                path={ROUTES.CATEGORIES}
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.AUTHOR, ROLES.ADMIN]}>
+                    <CategoryList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path={ROUTES.TAGS}
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.AUTHOR, ROLES.ADMIN]}>
+                    <TagList />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Author & Admin Routes */}
+              <Route
+                path={ROUTES.CREATE_POST}
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.AUTHOR, ROLES.ADMIN]}>
+                    <CreatePost />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path={ROUTES.EDIT_POST}
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.AUTHOR, ROLES.ADMIN]}>
+                    <EditPost />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Admin Only Routes */}
+              <Route
+                path={ROUTES.USERS}
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                    <UserList />
+                  </ProtectedRoute>
+                }
+              />
             </Route>
 
-            {/* User Routes */}
-            <Route
-              path="/user/*"
-              element={
-                <PrivateRoute requiredRole="user">
-                  <UserLayout />
-                </PrivateRoute>
-              }
-            >
-              <Route index element={<UserDashboard />} />
-              <Route path="posts" element={<UserPosts />} />
-              <Route path="profile" element={<UserProfile />} />
-              <Route path="notifications" element={<UserNotifications />} />
-            </Route>
-
-            {/* Catch-all 404 */}
+            {/* 404 Not Found */}
             <Route path="*" element={<NotFound />} />
           </Routes>
-        </UserPreferenceProvider>
-      </NotificationProvider>
-    </ThemeProvider>
-  </AuthProvider>
-);
+        </AuthProvider>
+      </ThemeProvider>
+    </Router>
+  );
+}
 
 export default App;

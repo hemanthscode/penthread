@@ -1,10 +1,25 @@
-import { api } from '../utils';
+import api from './api';
 
-export const fetchNotifications = () => api.get('/notifications');
+class NotificationService {
+  async getNotifications() {
+    const response = await api.get('/notifications');
+    return response.data;
+  }
 
-export const markNotificationAsRead = (notificationId) =>
-  api.patch(`/notifications/${notificationId}/read`);
+  async markAsRead(notificationId) {
+    const response = await api.patch(`/notifications/${notificationId}/read`);
+    return response.data;
+  }
 
-export const markAllNotificationsRead = () => api.patch('/notifications/read-all');
+  async markAllAsRead() {
+    const response = await api.patch('/notifications/read-all');
+    return response.data;
+  }
 
-export const deleteNotification = (notificationId) => api.delete(`/notifications/${notificationId}`);
+  async deleteNotification(notificationId) {
+    const response = await api.delete(`/notifications/${notificationId}`);
+    return response.data;
+  }
+}
+
+export default new NotificationService();

@@ -1,17 +1,45 @@
-import { api } from '../utils';
+import api from './api';
 
-export const getAllUsers = () => api.get('/users');
+class UserService {
+  async getUsers() {
+    const response = await api.get('/users');
+    return response.data;
+  }
 
-export const getUserById = (id) => api.get(`/users/${id}`);
+  async getUser(userId) {
+    const response = await api.get(`/users/${userId}`);
+    return response.data;
+  }
 
-export const updateUser = (id, data) => api.patch(`/users/${id}`, data);
+  async updateUser(userId, userData) {
+    const response = await api.patch(`/users/${userId}`, userData);
+    return response.data;
+  }
 
-export const deleteUser = (id) => api.delete(`/users/${id}`);
+  async deleteUser(userId) {
+    const response = await api.delete(`/users/${userId}`);
+    return response.data;
+  }
 
-export const getMyProfile = () => api.get('/users/profile/me');
+  async getMyProfile() {
+    const response = await api.get('/users/profile/me');
+    return response.data;
+  }
 
-export const updateMyProfile = (data) => api.patch('/users/profile/me', data);
+  async updateMyProfile(profileData) {
+    const response = await api.patch('/users/profile/me', profileData);
+    return response.data;
+  }
 
-export const updateUserRole = (id, role) => api.patch(`/users/${id}/role`, { role });
+  async updateUserRole(userId, role) {
+    const response = await api.patch(`/users/${userId}/role`, { role });
+    return response.data;
+  }
 
-export const updateUserStatus = (id, isActive) => api.patch(`/users/${id}/status`, { isActive });
+  async updateUserStatus(userId, isActive) {
+    const response = await api.patch(`/users/${userId}/status`, { isActive });
+    return response.data;
+  }
+}
+
+export default new UserService();

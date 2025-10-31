@@ -1,25 +1,33 @@
 // src/hooks/useComments.js
-import { useState, useEffect } from 'react';
-import * as commentService from '../services/commentService';
+import { useEffect } from 'react';
+import useCommentStore from '../store/useCommentStore';
 
-export const useComments = (postId) => {
-  const [comments, setComments] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchComments = async () => {
-    if (!postId) return;
-    setLoading(true);
-    try {
-      const response = await commentService.fetchCommentsByPost(postId);
-      setComments(response.data);
-    } finally {
-      setLoading(false);
-    }
-  };
+const useComments = (postId) => {
+  const {
+    comments,
+    loading,
+    fetchComments,
+    createComment,
+    moderateComment,
+    deleteComment,
+    clearComments,
+  } = useCommentStore();
 
   useEffect(() => {
-    fetchComments();
-  }, [postId]);
+    if (postId) {
+      fetchComments(postId);
+    }
+    return () => clearComments();
+  }, [postId, fetchComments, clearComments]);
 
-  return { comments, loading, fetchComments, setComments };
+  return {
+    comments,
+    loading,
+    createComment: (content) => createComment(postId, content),
+    moderateComment,
+    deleteComment,
+    refetch: () => fetchComments(postId),
+  };
 };
+
+export default useComments;

@@ -1,3 +1,10 @@
-import { api } from '../utils';
+import api from './api';
 
-export const fetchActivityLogs = () => api.get('/activity');
+class ActivityService {
+  async getActivities() {
+    const response = await api.get('/activity');
+    return response.data;
+  }
+}
+
+export default new ActivityService();

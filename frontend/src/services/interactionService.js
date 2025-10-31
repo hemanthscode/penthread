@@ -1,11 +1,20 @@
-import { api } from '../utils';
+import api from './api';
 
-export const likePost = (postId) => api.post(`/interactions/${postId}/like`);
+class InteractionService {
+  async toggleLike(postId) {
+    const response = await api.post(`/interactions/${postId}/like`);
+    return response.data;
+  }
 
-export const unlikePost = (postId) => api.delete(`/interactions/${postId}/like`);
+  async toggleFavorite(postId) {
+    const response = await api.post(`/interactions/${postId}/favorite`);
+    return response.data;
+  }
 
-export const favoritePost = (postId) => api.post(`/interactions/${postId}/favorite`);
+  async recordView(postId) {
+    const response = await api.post(`/interactions/${postId}/view`);
+    return response.data;
+  }
+}
 
-export const unfavoritePost = (postId) => api.delete(`/interactions/${postId}/favorite`);
-
-export const recordView = (postId) => api.post(`/interactions/${postId}/view`);
+export default new InteractionService();

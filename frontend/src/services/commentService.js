@@ -1,10 +1,26 @@
-import { api } from '../utils';
+// src/services/commentService.js
+import api from './api';
 
-export const fetchCommentsByPost = (postId) => api.get(`/comments/posts/${postId}/comments`);
+class CommentService {
+  async getComments(postId) {
+    const response = await api.get(`/comments/posts/${postId}/comments`);
+    return response.data;
+  }
 
-export const addComment = (postId, data) => api.post(`/comments/posts/${postId}/comments`, data);
+  async createComment(postId, content) {
+    const response = await api.post(`/comments/posts/${postId}/comments`, { content });
+    return response.data;
+  }
 
-export const moderateComment = (commentId, action) =>
-  api.patch(`/comments/comments/${commentId}/moderate`, { action });
+  async moderateComment(commentId, action) {
+    const response = await api.patch(`/comments/comments/${commentId}/moderate`, { action });
+    return response.data;
+  }
 
-export const deleteComment = (commentId) => api.delete(`/comments/comments/${commentId}`);
+  async deleteComment(commentId) {
+    const response = await api.delete(`/comments/comments/${commentId}`);
+    return response.data;
+  }
+}
+
+export default new CommentService();

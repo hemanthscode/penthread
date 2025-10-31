@@ -1,19 +1,50 @@
-import { api } from '../utils';
+import api from './api';
 
-export const fetchPosts = (params) => api.get('/posts', { params });
+class PostService {
+  async getPosts(params = {}) {
+    const response = await api.get('/posts', { params });
+    return response.data;
+  }
 
-export const fetchPostById = (id) => api.get(`/posts/${id}`);
+  async getPost(postId) {
+    const response = await api.get(`/posts/${postId}`);
+    return response.data;
+  }
 
-export const createPost = (data) => api.post('/posts', data);
+  async createPost(postData) {
+    const response = await api.post('/posts', postData);
+    return response.data;
+  }
 
-export const updatePost = (id, data) => api.patch(`/posts/${id}`, data);
+  async updatePost(postId, postData) {
+    const response = await api.patch(`/posts/${postId}`, postData);
+    return response.data;
+  }
 
-export const deletePost = (id) => api.delete(`/posts/${id}`);
+  async deletePost(postId) {
+    const response = await api.delete(`/posts/${postId}`);
+    return response.data;
+  }
 
-export const approvePost = (id) => api.patch(`/posts/${id}/approve`);
+  async approvePost(postId) {
+    const response = await api.patch(`/posts/${postId}/approve`);
+    return response.data;
+  }
 
-export const rejectPost = (id) => api.patch(`/posts/${id}/reject`);
+  async rejectPost(postId) {
+    const response = await api.patch(`/posts/${postId}/reject`);
+    return response.data;
+  }
 
-export const publishPost = (id) => api.patch(`/posts/${id}/publish`);
+  async publishPost(postId) {
+    const response = await api.patch(`/posts/${postId}/publish`);
+    return response.data;
+  }
 
-export const unpublishPost = (id) => api.patch(`/posts/${id}/unpublish`);
+  async unpublishPost(postId) {
+    const response = await api.patch(`/posts/${postId}/unpublish`);
+    return response.data;
+  }
+}
+
+export default new PostService();

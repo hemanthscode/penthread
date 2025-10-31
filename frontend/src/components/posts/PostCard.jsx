@@ -1,138 +1,92 @@
 // src/components/posts/PostCard.jsx
-import React, { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Heart, Star, Eye } from "lucide-react";
-import { useAuthContext } from "../../contexts/AuthContext";
-import { formatDate, truncate } from "../../utils";
-import { likePost, favoritePost } from "../../services";
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Heart, MessageCircle, Eye, Calendar } from 'lucide-react';
+import Card from '../common/Card';
+import Badge from '../common/Badge';
+import Avatar from '../common/Avatar';
+import { formatRelativeTime, truncateText } from '../../utils/helpers';
+import { ROUTES } from '../../utils/constants';
 
 const PostCard = ({ post }) => {
-  const { user } = useAuthContext();
-  const navigate = useNavigate();
-
-  const [likesCount, setLikesCount] = useState(post.likesCount ?? 0);
-  const [favoritesCount, setFavoritesCount] = useState(post.favoritesCount ?? 0);
-  const [liked, setLiked] = useState(post.isLiked || false);
-  const [favorited, setFavorited] = useState(post.isFavorited || false);
-  const [loadingLike, setLoadingLike] = useState(false);
-  const [loadingFav, setLoadingFav] = useState(false);
-
-  const showStatusBadge = user && (user.role === "admin" || user.role === "author");
-
-  const handleLike = async (e) => {
-    e.preventDefault();
-    if (!user) return navigate("/auth/login");
-    try {
-      setLoadingLike(true);
-      const res = await likePost(post._id);
-      setLiked(res.liked);
-      setLikesCount(res.likesCount);
-    } catch (err) {
-      console.error("Error liking post:", err);
-    } finally {
-      setLoadingLike(false);
-    }
-  };
-
-  const handleFavorite = async (e) => {
-    e.preventDefault();
-    if (!user) return navigate("/auth/login");
-    try {
-      setLoadingFav(true);
-      const res = await favoritePost(post._id);
-      setFavorited(res.favorited);
-      setFavoritesCount(res.favoritesCount);
-    } catch (err) {
-      console.error("Error favoriting post:", err);
-    } finally {
-      setLoadingFav(false);
-    }
-  };
+  const postUrl = ROUTES.POST_DETAIL.replace(':id', post._id);
 
   return (
-    <motion.article
-      whileHover={{ y: -6, scale: 1.02 }}
-      transition={{ type: "spring", stiffness: 200, damping: 12 }}
-      className="group bg-white/90 backdrop-blur border border-gray-100 rounded-2xl shadow-md hover:shadow-2xl transition-all duration-300 overflow-hidden flex flex-col"
-    >
-      <div className="p-6 flex flex-col flex-grow">
-        {/* Header */}
-        <header className="flex justify-between items-start mb-3">
-          <Link
-            to={`/posts/${post._id}`}
-            className="text-xl font-bold text-gray-900 hover:text-blue-600 transition-colors line-clamp-2"
-            title={post.title}
-          >
-            {truncate(post.title, 70)}
-          </Link>
-
-          {showStatusBadge && (
-            <span
-              className={`text-xs font-semibold uppercase px-3 py-1 rounded-full ${
-                post.status === "published"
-                  ? "bg-green-100 text-green-700"
-                  : post.status === "draft"
-                  ? "bg-gray-200 text-gray-700"
-                  : "bg-yellow-100 text-yellow-700"
-              }`}
-            >
-              {post.status}
-            </span>
-          )}
-        </header>
-
-        {/* Content */}
-        <p className="text-gray-600 mb-4 line-clamp-3">{truncate(post.content, 180)}</p>
-
-        {/* Author */}
-        <div className="flex items-center text-sm text-gray-500 mb-6">
-          <span>By</span>
-          <span className="mx-1 font-medium text-gray-800">{post.author?.name || "Unknown"}</span>
-          <span className="mx-1">•</span>
-          <time dateTime={post.createdAt}>{formatDate(post.createdAt)}</time>
+    <Card hover className="h-full flex flex-col">
+      {/* Post Image */}
+      {post.image && (
+        <div className="w-full h-48 overflow-hidden rounded-t-lg">
+          <img
+            src={post.image}
+            alt={post.title}
+            className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+          />
         </div>
+      )}
 
-        {/* Footer */}
-        <footer className="mt-auto border-t pt-4 flex justify-between items-center text-gray-500">
-          <div className="flex items-center space-x-6">
-            {/* Like Button */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={handleLike}
-              disabled={loadingLike}
-              className={`flex items-center space-x-1 ${
-                liked ? "text-red-500" : "hover:text-red-500"
-              }`}
-              aria-label={liked ? "Unlike post" : "Like post"}
-            >
-              <Heart className={`w-5 h-5 ${liked ? "fill-red-500" : ""}`} />
-              <span>{likesCount}</span>
-            </motion.button>
+      <div className="flex-1 flex flex-col p-6">
+        {/* Categories */}
+        {post.categories && post.categories.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {post.categories.slice(0, 2).map((category) => (
+              <Badge key={category._id} variant="primary" size="sm">
+                {category.name}
+              </Badge>
+            ))}
+          </div>
+        )}
 
-            {/* Favorite Button */}
-            <motion.button
-              whileTap={{ scale: 0.9 }}
-              onClick={handleFavorite}
-              disabled={loadingFav}
-              className={`flex items-center space-x-1 ${
-                favorited ? "text-yellow-500" : "hover:text-yellow-500"
-              }`}
-              aria-label={favorited ? "Remove favorite" : "Add favorite"}
-            >
-              <Star className={`w-5 h-5 ${favorited ? "fill-yellow-400" : ""}`} />
-              <span>{favoritesCount}</span>
-            </motion.button>
+        {/* Title */}
+        <Link to={postUrl}>
+          <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2 hover:text-primary-600 dark:hover:text-primary-400 transition-colors line-clamp-2">
+            {post.title}
+          </h3>
+        </Link>
 
-            {/* Views */}
-            <div className="flex items-center space-x-1">
-              <Eye className="w-5 h-5 text-gray-400" />
-              <span>{post.viewsCount ?? 0}</span>
+        {/* Excerpt */}
+        <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 flex-1 line-clamp-3">
+          {truncateText(post.content, 150)}
+        </p>
+
+        {/* Author and Date */}
+        <div className="flex items-center justify-between mb-4 pb-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center space-x-2">
+            <Avatar name={post.author?.name} size="sm" />
+            <div>
+              <p className="text-sm font-medium text-gray-900 dark:text-gray-100">
+                {post.author?.name}
+              </p>
+              <div className="flex items-center text-xs text-gray-500 dark:text-gray-400">
+                <Calendar className="h-3 w-3 mr-1" />
+                {formatRelativeTime(post.createdAt)}
+              </div>
             </div>
           </div>
-        </footer>
+        </div>
+
+        {/* Stats */}
+        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center">
+              <Heart
+                className={`h-4 w-4 mr-1 ${
+                  post.userInteractions?.liked ? 'fill-red-500 text-red-500' : ''
+                }`}
+              />
+              {post.likesCount || 0}
+            </div>
+            <div className="flex items-center">
+              <MessageCircle className="h-4 w-4 mr-1" />
+              {post.commentsCount || 0}
+            </div>
+            <div className="flex items-center">
+              <Eye className="h-4 w-4 mr-1" />
+              {post.viewsCount || 0}
+            </div>
+          </div>
+        </div>
       </div>
-    </motion.article>
+    </Card>
   );
 };
 

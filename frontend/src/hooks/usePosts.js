@@ -1,25 +1,34 @@
-// src/hooks/usePosts.js
-import { useState, useEffect } from 'react';
-import * as postService from '../services/postService';
+import { useEffect } from 'react';
+import usePostStore from '../store/usePostStore';
 
-export const usePosts = (initialFilters = {}) => {
-  const [posts, setPosts] = useState([]);
-  const [filters, setFilters] = useState(initialFilters);
-  const [loading, setLoading] = useState(false);
-
-  const fetchPosts = async (customFilters = filters) => {
-    setLoading(true);
-    try {
-      const response = await postService.fetchPosts(customFilters);
-      setPosts(response.data);
-    } finally {
-      setLoading(false);
-    }
-  };
+const usePosts = (params = {}) => {
+  const {
+    posts,
+    loading,
+    error,
+    fetchPosts,
+    createPost,
+    updatePost,
+    deletePost,
+    toggleLike,
+    toggleFavorite,
+  } = usePostStore();
 
   useEffect(() => {
-    fetchPosts();
-  }, [filters]);
+    fetchPosts(params);
+  }, []);
 
-  return { posts, loading, filters, setFilters, fetchPosts };
+  return {
+    posts,
+    loading,
+    error,
+    fetchPosts,
+    createPost,
+    updatePost,
+    deletePost,
+    toggleLike,
+    toggleFavorite,
+  };
 };
+
+export default usePosts;

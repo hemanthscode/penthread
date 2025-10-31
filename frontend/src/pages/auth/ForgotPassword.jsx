@@ -1,50 +1,115 @@
-import React, { useState } from 'react';
+// src/pages/auth/ForgotPassword.jsx
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Mail, BookOpen, ArrowLeft } from 'lucide-react';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
-import * as authService from '../../services/authService';
+import Alert from '../../components/common/Alert';
+import { ROUTES } from '../../utils/constants';
+import authService from '../../services/authService';
+import useForm from '../../hooks/useForm';
 
 const ForgotPassword = () => {
-  const [email, setEmail] = useState('');
-  const [status, setStatus] = useState('');
   const [error, setError] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setLoading(true);
-    setStatus('');
+  const validate = (values) => {
+    const errors = {};
+    if (!values.email) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(values.email)) {
+      errors.email = 'Email is invalid';
+    }
+    return errors;
+  };
+
+  const { values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting } =
+    useForm({ email: '' }, validate);
+
+  const onSubmit = async (formValues) => {
     setError('');
-
+    setSuccess(false);
     try {
-      await authService.forgotPassword(email);
-      setStatus('Password reset link sent to your email.');
-    } catch (e) {
-      setError(e.response?.data?.message || 'Failed to send reset link');
-    } finally {
-      setLoading(false);
+      await authService.forgotPassword(formValues.email);
+      setSuccess(true);
+    } catch (err) {
+      setError(err.response?.data?.message || 'Failed to send reset email. Please try again.');
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="max-w-md w-full bg-white p-8 rounded-xl shadow-lg">
-        <h2 className="text-3xl font-extrabold text-center mb-7">Forgot Password</h2>
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <Input
-            label="Email"
-            type="email"
-            name="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-md w-full space-y-8"
+      >
+        {/* Logo and Title */}
+        <div className="text-center">
+          <div className="flex justify-center">
+            <BookOpen className="h-12 w-12 text-primary-600 dark:text-primary-400" />
+          </div>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-gray-100">
+            Forgot password?
+          </h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
+            Enter your email and we'll send you a reset link
+          </p>
+        </div>
+
+        {/* Success Alert */}
+        {success && (
+          <Alert
+            type="success"
+            title="Email sent!"
+            message="Check your inbox for password reset instructions."
           />
-          {error && <p className="text-red-600 text-center">{error}</p>}
-          {status && <p className="text-green-600 text-center">{status}</p>}
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? 'Sending...' : 'Send Reset Link'}
-          </Button>
-        </form>
-      </div>
+        )}
+
+        {/* Error Alert */}
+        {error && (
+          <Alert type="error" message={error} onClose={() => setError('')} />
+        )}
+
+        {/* Forgot Password Form */}
+        {!success && (
+          <form onSubmit={(e) => handleSubmit(onSubmit)(e)} className="mt-8 space-y-6">
+            <Input
+              label="Email address"
+              type="email"
+              name="email"
+              value={values.email}
+              onChange={handleChange}
+              onBlur={handleBlur}
+              error={touched.email && errors.email}
+              icon={Mail}
+              placeholder="you@example.com"
+              required
+            />
+
+            <Button
+              type="submit"
+              variant="primary"
+              fullWidth
+              loading={isSubmitting}
+              disabled={isSubmitting}
+            >
+              Send reset link
+            </Button>
+          </form>
+        )}
+
+        <div className="text-center">
+          <Link
+            to={ROUTES.LOGIN}
+            className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back to login
+          </Link>
+        </div>
+      </motion.div>
     </div>
   );
 };

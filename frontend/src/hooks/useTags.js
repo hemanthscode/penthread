@@ -1,24 +1,23 @@
-// src/hooks/useTags.js
-import { useState, useEffect } from 'react';
-import * as tagService from '../services/tagService';
+import { useEffect } from 'react';
+import useTagStore from '../store/useTagStore';
 
-export const useTags = () => {
-  const [tags, setTags] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchTags = async () => {
-    setLoading(true);
-    try {
-      const response = await tagService.fetchTags();
-      setTags(response.data);
-    } finally {
-      setLoading(false);
-    }
-  };
+const useTags = () => {
+  const { tags, loading, fetchTags, createTag, updateTag, deleteTag } = useTagStore();
 
   useEffect(() => {
-    fetchTags();
+    if (tags.length === 0) {
+      fetchTags();
+    }
   }, []);
 
-  return { tags, loading, fetchTags };
+  return {
+    tags,
+    loading,
+    createTag,
+    updateTag,
+    deleteTag,
+    refetch: fetchTags,
+  };
 };
+
+export default useTags;

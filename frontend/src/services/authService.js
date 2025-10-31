@@ -1,28 +1,68 @@
-import { api } from '../utils';
+import api from './api';
+import storageService from '../utils/storage';
 
-// Register a new user
-export const register = (data) => api.post('/auth/register', data);
+class AuthService {
+  async register(userData) {
+    const response = await api.post('/auth/register', userData);
+    return response.data;
+  }
 
-// Login user, returns tokens + user info
-export const login = (credentials) => api.post('/auth/login', credentials);
+  async login(credentials) {
+    const response = await api.post('/auth/login', credentials);
+    if (response.data.success && response.data.tokens) {
+      storageService.setAccessToken(response.data.tokens.accessToken);
+      storageService.setRefreshToken(response.data.tokens.refreshToken);
+      storageService.setUser({
+        id: response.data.userId,
+        role: response.data.role,
+      });
+    }
+    return response.data;
+  }
 
-// Logout user (token invalidation handled server-side)
-export const logout = () => api.post('/auth/logout');
+  async logout() {
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      storageService.clearAuth();
+    }
+  }
 
-// Refresh token flow
-export const refreshToken = (refreshToken) =>
-  api.post('/auth/refresh', { refreshToken });
+  async getProfile() {
+    const response = await api.get('/auth/me');
+    if (response.data.success) {
+      storageService.setUser(response.data.data);
+    }
+    return response.data;
+  }
 
-// Get current user profile
-export const getProfile = () => api.get('/auth/me');
+  async changePassword(passwords) {
+    const response = await api.patch('/auth/change-password', passwords);
+    return response.data;
+  }
 
-// Change password for authenticated user
-export const changePassword = (data) => api.patch('/auth/change-password', data);
+  async forgotPassword(email) {
+    const response = await api.post('/auth/forgot-password', { email });
+    return response.data;
+  }
 
-// Forgot password
-export const forgotPassword = (email) =>
-  api.post('/auth/forgot-password', { email });
+  async resetPassword(token, password) {
+    const response = await api.post('/auth/reset-password', { token, password });
+    return response.data;
+  }
 
-// Reset password using token
-export const resetPassword = (token, newPassword) =>
-  api.post('/auth/reset-password', { token, password: newPassword });
+  async refreshToken(refreshToken) {
+    const response = await api.post('/auth/refresh', { refreshToken });
+    return response.data;
+  }
+
+  isAuthenticated() {
+    return !!storageService.getAccessToken();
+  }
+
+  getCurrentUser() {
+    return storageService.getUser();
+  }
+}
+
+export default new AuthService();

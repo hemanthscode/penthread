@@ -1,4 +1,6 @@
+// src/modules/posts/post.service.js
 import Post from './post.model.js';
+import Comment from '../comments/comment.model.js';
 import * as interactionService from '../interactions/interaction.service.js';
 
 function assertValidId(postId) {
@@ -27,6 +29,13 @@ export async function getPostById(postId, userId = null) {
 
   if (!post) return null;
 
+  // Add comments count
+  const commentsCount = await Comment.countDocuments({ 
+    post: postId, 
+    status: 'approved' 
+  });
+  post._doc.commentsCount = commentsCount;
+
   if (userId) {
     const interactions = await interactionService.getUserInteractions(userId, postId);
     post._doc.userInteractions = interactions;
@@ -52,13 +61,45 @@ export async function getPosts(filter = {}, options = {}) {
 
   const posts = await query.exec();
 
-  // Append interaction status per post optimistically if userId provided
+  // Get all post IDs for bulk comment counting
+  const postIds = posts.map(p => p._id);
+
+  // Bulk fetch approved comments count for all posts
+  const commentCounts = await Comment.aggregate([
+    {
+      $match: {
+        post: { $in: postIds },
+        status: 'approved'
+      }
+    },
+    {
+      $group: {
+        _id: '$post',
+        count: { $sum: 1 }
+      }
+    }
+  ]);
+
+  // Create a map for quick lookup
+  const commentCountMap = new Map(
+    commentCounts.map(item => [item._id.toString(), item.count])
+  );
+
+  // Append interaction status and comments count per post
   if (userId) {
-    const postIds = posts.map(p => p._id);
     const interactionsMap = await interactionService.getUserInteractionsForPosts(userId, postIds);
 
     posts.forEach(post => {
-      post._doc.userInteractions = interactionsMap.get(post._id.toString()) || { liked: false, favorited: false };
+      post._doc.userInteractions = interactionsMap.get(post._id.toString()) || { 
+        liked: false, 
+        favorited: false 
+      };
+      post._doc.commentsCount = commentCountMap.get(post._id.toString()) || 0;
+    });
+  } else {
+    // Add comments count even when no userId
+    posts.forEach(post => {
+      post._doc.commentsCount = commentCountMap.get(post._id.toString()) || 0;
     });
   }
 

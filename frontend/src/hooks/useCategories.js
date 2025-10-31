@@ -1,24 +1,24 @@
-// src/hooks/useCategories.js
-import { useState, useEffect } from 'react';
-import * as categoryService from '../services/categoryService';
+import { useEffect } from 'react';
+import useCategoryStore from '../store/useCategoryStore';
 
-export const useCategories = () => {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(false);
-
-  const fetchCategories = async () => {
-    setLoading(true);
-    try {
-      const response = await categoryService.fetchCategories();
-      setCategories(response.data);
-    } finally {
-      setLoading(false);
-    }
-  };
+const useCategories = () => {
+  const { categories, loading, fetchCategories, createCategory, updateCategory, deleteCategory } =
+    useCategoryStore();
 
   useEffect(() => {
-    fetchCategories();
+    if (categories.length === 0) {
+      fetchCategories();
+    }
   }, []);
 
-  return { categories, loading, fetchCategories };
+  return {
+    categories,
+    loading,
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    refetch: fetchCategories,
+  };
 };
+
+export default useCategories;

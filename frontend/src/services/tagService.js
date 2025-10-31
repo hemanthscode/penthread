@@ -1,11 +1,30 @@
-import { api } from '../utils';
+import api from './api';
 
-export const fetchTags = () => api.get('/tags');
+class TagService {
+  async getTags() {
+    const response = await api.get('/tags');
+    return response.data;
+  }
 
-export const fetchTagById = (id) => api.get(`/tags/${id}`);
+  async getTag(tagId) {
+    const response = await api.get(`/tags/${tagId}`);
+    return response.data;
+  }
 
-export const createTag = (data) => api.post('/tags', data);
+  async createTag(tagData) {
+    const response = await api.post('/tags', tagData);
+    return response.data;
+  }
 
-export const updateTag = (id, data) => api.patch(`/tags/${id}`, data);
+  async updateTag(tagId, tagData) {
+    const response = await api.patch(`/tags/${tagId}`, tagData);
+    return response.data;
+  }
 
-export const deleteTag = (id) => api.delete(`/tags/${id}`);
+  async deleteTag(tagId) {
+    const response = await api.delete(`/tags/${tagId}`);
+    return response.data;
+  }
+}
+
+export default new TagService();

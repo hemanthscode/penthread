@@ -1,12 +1,15 @@
-// src/hooks/index.js
-
-export { useAuth, AuthProvider } from './useAuth';
-export { usePosts } from './usePosts';
-export { useComments } from './useComments';
-export { useCategories } from './useCategories';
-export { useTags } from './useTags';
-export { useInteractions } from './useInteractions';
-export { useNotifications } from './useNotifications';
-export { useAdminDashboard, useAuthorDashboard, useUserDashboard } from './useDashboard';
-export { useActivity } from './useActivity';
-export { useForm } from './useForm';
+export { default as useAuth } from './useAuth';
+export { default as usePosts } from './usePosts';
+export { default as usePost } from './usePost';
+export { default as useComments } from './useComments';
+export { default as useNotifications } from './useNotifications';
+export { default as useCategories } from './useCategories';
+export { default as useTags } from './useTags';
+export { default as useDebounce } from './useDebounce';
+export { default as useLocalStorage } from './useLocalStorage';
+export { default as useClickOutside } from './useClickOutside';
+export { default as useMediaQuery } from './useMediaQuery';
+export { default as useForm } from './useForm';
+export { default as useIntersectionObserver } from './useIntersectionObserver';
+export { default as usePagination } from './usePagination';
+export { default as useAsync } from './useAsync';
