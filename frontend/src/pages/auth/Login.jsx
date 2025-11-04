@@ -2,7 +2,7 @@
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, BookOpen, Eye, EyeOff } from 'lucide-react';
+import { Mail, Lock, BookOpen, Eye, EyeOff, User } from 'lucide-react';
 import { useAuth } from '../../hooks';
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
@@ -10,15 +10,33 @@ import Alert from '../../components/common/Alert';
 import { ROUTES } from '../../utils/constants';
 import toast from 'react-hot-toast';
 
+const quickLogins = [
+  {
+    label: 'Admin Login',
+    email: 'admin@blog.com',
+    password: 'Admin@123',
+    color: 'bg-red-600 hover:bg-red-700',
+  },
+  {
+    label: 'Author Login',
+    email: 'alice.author@blog.com',
+    password: 'Author@123',
+    color: 'bg-blue-600 hover:bg-blue-700',
+  },
+  {
+    label: 'User Login',
+    email: 'john.user@blog.com',
+    password: 'User@123',
+    color: 'bg-green-600 hover:bg-green-700',
+  },
+];
+
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
   
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -27,42 +45,23 @@ const Login = () => {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
   const validate = () => {
     const newErrors = {};
-    
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Email is invalid';
-    }
-    
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    }
-    
+    if (!formData.email) newErrors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Email is invalid';
+    if (!formData.password) newErrors.password = 'Password is required';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    
-    if (!validate()) {
-      return;
-    }
-
+  const performLogin = async (email, password) => {
     setError('');
     setLoading(true);
-
     try {
-      const result = await login(formData);
-      
+      const result = await login({ email, password });
       if (result.success) {
         toast.success('Login successful!');
         const from = location.state?.from?.pathname || ROUTES.DASHBOARD;
@@ -77,6 +76,17 @@ const Login = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+    await performLogin(formData.email, formData.password);
+  };
+
+  const handleQuickLogin = async (email, password) => {
+    setFormData({ email, password });
+    await performLogin(email, password);
   };
 
   return (
@@ -100,12 +110,33 @@ const Login = () => {
         </div>
 
         {/* Error Alert */}
-        {error && (
-          <Alert type="error" message={error} onClose={() => setError('')} />
-        )}
+        {error && <Alert type="error" message={error} onClose={() => setError('')} />}
+
+        {/* Quick Login Buttons */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          {quickLogins.map((item) => (
+            <button
+              key={item.label}
+              type="button"
+              disabled={loading}
+              onClick={() => handleQuickLogin(item.email, item.password)}
+              className={`flex items-center justify-center px-4 py-2 rounded-md text-white font-medium ${item.color} disabled:opacity-50 transition`}
+            >
+              <User className="h-4 w-4 mr-2" />
+              {item.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Divider */}
+        <div className="flex items-center my-4">
+          <div className="flex-grow h-px bg-gray-300 dark:bg-gray-700" />
+          <span className="mx-2 text-sm text-gray-500 dark:text-gray-400">or</span>
+          <div className="flex-grow h-px bg-gray-300 dark:bg-gray-700" />
+        </div>
 
         {/* Login Form */}
-        <form onSubmit={handleSubmit} className="mt-8 space-y-6">
+        <form onSubmit={handleSubmit} className="mt-6 space-y-6">
           <div className="space-y-4">
             <Input
               label="Email address"
@@ -136,11 +167,7 @@ const Login = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
-                {showPassword ? (
-                  <EyeOff className="h-5 w-5" />
-                ) : (
-                  <Eye className="h-5 w-5" />
-                )}
+                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
               </button>
             </div>
           </div>

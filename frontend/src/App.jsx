@@ -1,5 +1,4 @@
-// src/App.jsx - Update the routes section
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
@@ -31,6 +30,12 @@ import { Notifications } from './pages/notifications';
 // Categories & Tags
 import { CategoryList } from './pages/categories';
 import { TagList } from './pages/tags';
+
+// Admin Pages
+import { AdminPosts, AdminAnalytics, AdminSettings } from './pages/admin';
+
+// Author Pages
+import { MyPosts, AuthorAnalytics } from './pages/author';
 
 // Home Page
 import Home from './pages/Home';
@@ -120,27 +125,10 @@ function App() {
                 </ProtectedRoute>
               }
             >
+              {/* Common Protected Routes */}
               <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
               <Route path={ROUTES.PROFILE} element={<Profile />} />
               <Route path={ROUTES.NOTIFICATIONS} element={<Notifications />} />
-
-              {/* Categories & Tags - Author/Admin only */}
-              <Route
-                path={ROUTES.CATEGORIES}
-                element={
-                  <ProtectedRoute allowedRoles={[ROLES.AUTHOR, ROLES.ADMIN]}>
-                    <CategoryList />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path={ROUTES.TAGS}
-                element={
-                  <ProtectedRoute allowedRoles={[ROLES.AUTHOR, ROLES.ADMIN]}>
-                    <TagList />
-                  </ProtectedRoute>
-                }
-              />
 
               {/* Author & Admin Routes */}
               <Route
@@ -160,12 +148,72 @@ function App() {
                 }
               />
 
+              {/* Categories & Tags - Author/Admin only */}
+              <Route
+                path={ROUTES.CATEGORIES}
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.AUTHOR, ROLES.ADMIN]}>
+                    <CategoryList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path={ROUTES.TAGS}
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.AUTHOR, ROLES.ADMIN]}>
+                    <TagList />
+                  </ProtectedRoute>
+                }
+              />
+
+              {/* Author Only Routes */}
+              <Route
+                path="/my-posts"
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.AUTHOR, ROLES.ADMIN]}>
+                    <MyPosts />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/analytics"
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.AUTHOR, ROLES.ADMIN]}>
+                    <AuthorAnalytics />
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Admin Only Routes */}
               <Route
                 path={ROUTES.USERS}
                 element={
                   <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
                     <UserList />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/posts"
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                    <AdminPosts />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/analytics"
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                    <AdminAnalytics />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path="/admin/settings"
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.ADMIN]}>
+                    <AdminSettings />
                   </ProtectedRoute>
                 }
               />

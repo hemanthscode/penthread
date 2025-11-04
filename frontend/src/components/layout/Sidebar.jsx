@@ -27,17 +27,17 @@ const Sidebar = () => {
 
     const authorItems = [
       { name: 'My Posts', icon: FileText, path: '/my-posts' },
+      { name: 'Analytics', icon: BarChart3, path: '/analytics' },
       { name: 'Categories', icon: FolderOpen, path: ROUTES.CATEGORIES },
       { name: 'Tags', icon: Tag, path: ROUTES.TAGS },
-      { name: 'Analytics', icon: BarChart3, path: '/analytics' },
     ];
 
     const adminItems = [
       { name: 'All Posts', icon: FileText, path: '/admin/posts' },
+      { name: 'Analytics', icon: BarChart3, path: '/admin/analytics' },
       { name: 'Users', icon: Users, path: ROUTES.USERS },
       { name: 'Categories', icon: FolderOpen, path: ROUTES.CATEGORIES },
       { name: 'Tags', icon: Tag, path: ROUTES.TAGS },
-      { name: 'Analytics', icon: BarChart3, path: '/admin/analytics' },
       { name: 'Settings', icon: Settings, path: '/admin/settings' },
     ];
 

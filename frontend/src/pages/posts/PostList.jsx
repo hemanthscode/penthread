@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Filter, Plus } from 'lucide-react';
+import { Search, Filter, FileText } from 'lucide-react';
 import { useAuth } from '../../hooks';
-import usePosts from '../../hooks/usePosts';
 import useCategories from '../../hooks/useCategories';
 import useTags from '../../hooks/useTags';
 import useDebounce from '../../hooks/useDebounce';
@@ -16,46 +15,66 @@ import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import Pagination from '../../components/common/Pagination';
+import postService from '../../services/postService';
 import { ROUTES } from '../../utils/constants';
-import { FileText } from 'lucide-react';
+import toast from 'react-hot-toast';
 
 const PostList = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { isAuthenticated, isAuthor, isAdmin } = useAuth();
-  
+
+  const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   const [selectedCategory, setSelectedCategory] = useState(searchParams.get('category') || '');
   const [selectedTag, setSelectedTag] = useState(searchParams.get('tag') || '');
   const [currentPage, setCurrentPage] = useState(Number(searchParams.get('page')) || 1);
+  const [totalPages, setTotalPages] = useState(1);
   const [showFilters, setShowFilters] = useState(false);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
-  const { posts, loading, fetchPosts } = usePosts();
   const { categories } = useCategories();
   const { tags } = useTags();
 
   useEffect(() => {
-    const params = {
-      page: currentPage,
-      limit: 9,
-    };
-
-    if (debouncedSearch) params.search = debouncedSearch;
-    if (selectedCategory) params.categoryId = selectedCategory;
-    if (selectedTag) params.tagId = selectedTag;
-
-    fetchPosts(params);
-
-    // Update URL params
-    const newParams = new URLSearchParams();
-    if (debouncedSearch) newParams.set('search', debouncedSearch);
-    if (selectedCategory) newParams.set('category', selectedCategory);
-    if (selectedTag) newParams.set('tag', selectedTag);
-    if (currentPage > 1) newParams.set('page', currentPage.toString());
-    setSearchParams(newParams);
+    fetchPosts();
   }, [debouncedSearch, selectedCategory, selectedTag, currentPage]);
+
+  const fetchPosts = async () => {
+    setLoading(true);
+    try {
+      const params = {
+        page: currentPage,
+        limit: 9,
+      };
+
+      if (debouncedSearch) params.search = debouncedSearch;
+      if (selectedCategory) params.categoryId = selectedCategory;
+      if (selectedTag) params.tagId = selectedTag;
+
+      const response = await postService.getPublicPosts(params);
+      
+      if (response.success) {
+        setPosts(response.data);
+        setTotalPages(response.pagination?.totalPages || 1);
+      }
+
+      // Update URL params
+      const newParams = new URLSearchParams();
+      if (debouncedSearch) newParams.set('search', debouncedSearch);
+      if (selectedCategory) newParams.set('category', selectedCategory);
+      if (selectedTag) newParams.set('tag', selectedTag);
+      if (currentPage > 1) newParams.set('page', currentPage.toString());
+      setSearchParams(newParams);
+    } catch (error) {
+      console.error('Failed to fetch posts:', error);
+      toast.error('Failed to load posts');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleReset = () => {
     setSearchQuery('');
@@ -178,7 +197,7 @@ const PostList = () => {
           {/* Pagination */}
           <Pagination
             currentPage={currentPage}
-            totalPages={10}
+            totalPages={totalPages}
             onPageChange={setCurrentPage}
           />
         </>

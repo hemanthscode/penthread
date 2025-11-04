@@ -1,4 +1,3 @@
-// src/modules/posts/post.service.js
 import Post from './post.model.js';
 import Comment from '../comments/comment.model.js';
 import * as interactionService from '../interactions/interaction.service.js';
@@ -8,17 +7,16 @@ function assertValidId(postId) {
 }
 
 /**
- * Create new post defaulting status to 'pending'
+ * Create new post
  */
 export async function createPost(postData) {
   const post = new Post(postData);
   await post.save();
-  // Populate after save for consistent output
   return getPostById(post._id);
 }
 
 /**
- * Get single post with populated relations and user interaction status
+ * Get single post with all details
  */
 export async function getPostById(postId, userId = null) {
   assertValidId(postId);
@@ -30,9 +28,9 @@ export async function getPostById(postId, userId = null) {
   if (!post) return null;
 
   // Add comments count
-  const commentsCount = await Comment.countDocuments({ 
-    post: postId, 
-    status: 'approved' 
+  const commentsCount = await Comment.countDocuments({
+    post: postId,
+    status: 'approved',
   });
   post._doc.commentsCount = commentsCount;
 
@@ -45,7 +43,7 @@ export async function getPostById(postId, userId = null) {
 }
 
 /**
- * Paginated post fetching with filtering and sorting support
+ * Get posts with filtering, sorting, and pagination
  */
 export async function getPosts(filter = {}, options = {}) {
   const { page = 1, limit = 10, sortBy = 'createdAt', order = 'desc', userId = null } = options;
@@ -60,45 +58,39 @@ export async function getPosts(filter = {}, options = {}) {
     .populate('tags', 'name');
 
   const posts = await query.exec();
+  const postIds = posts.map((p) => p._id);
 
-  // Get all post IDs for bulk comment counting
-  const postIds = posts.map(p => p._id);
-
-  // Bulk fetch approved comments count for all posts
+  // Bulk fetch comment counts
   const commentCounts = await Comment.aggregate([
     {
       $match: {
         post: { $in: postIds },
-        status: 'approved'
-      }
+        status: 'approved',
+      },
     },
     {
       $group: {
         _id: '$post',
-        count: { $sum: 1 }
-      }
-    }
+        count: { $sum: 1 },
+      },
+    },
   ]);
 
-  // Create a map for quick lookup
-  const commentCountMap = new Map(
-    commentCounts.map(item => [item._id.toString(), item.count])
-  );
+  const commentCountMap = new Map(commentCounts.map((item) => [item._id.toString(), item.count]));
 
-  // Append interaction status and comments count per post
+  // Add interactions and comment counts
   if (userId) {
     const interactionsMap = await interactionService.getUserInteractionsForPosts(userId, postIds);
 
-    posts.forEach(post => {
-      post._doc.userInteractions = interactionsMap.get(post._id.toString()) || { 
-        liked: false, 
-        favorited: false 
+    posts.forEach((post) => {
+      post._doc.userInteractions = interactionsMap.get(post._id.toString()) || {
+        liked: false,
+        favorited: false,
       };
       post._doc.commentsCount = commentCountMap.get(post._id.toString()) || 0;
     });
   } else {
-    // Add comments count even when no userId
-    posts.forEach(post => {
+    posts.forEach((post) => {
       post._doc.commentsCount = commentCountMap.get(post._id.toString()) || 0;
     });
   }
@@ -107,7 +99,14 @@ export async function getPosts(filter = {}, options = {}) {
 }
 
 /**
- * Update post with author/admin authorization
+ * Count posts matching filter
+ */
+export async function countPosts(filter = {}) {
+  return Post.countDocuments(filter);
+}
+
+/**
+ * Update post
  */
 export async function updatePost(postId, updateData, userId, isAdmin = false) {
   const post = await Post.findById(postId);
@@ -124,7 +123,7 @@ export async function updatePost(postId, updateData, userId, isAdmin = false) {
 }
 
 /**
- * Delete post with authorization
+ * Delete post
  */
 export async function deletePost(postId, userId, isAdmin = false) {
   const post = await Post.findById(postId);
@@ -138,7 +137,7 @@ export async function deletePost(postId, userId, isAdmin = false) {
 }
 
 /**
- * Change post status utility methods
+ * Change post status
  */
 async function changeStatus(postId, newStatus) {
   const post = await Post.findById(postId);
@@ -151,20 +150,28 @@ async function changeStatus(postId, newStatus) {
 export const approvePost = (postId) => changeStatus(postId, 'approved');
 export const rejectPost = (postId) => changeStatus(postId, 'rejected');
 
+/**
+ * Publish post
+ */
 export async function publishPost(postId, userId, isAdmin = false) {
   const post = await Post.findById(postId);
   if (!post) throw new Error('Post not found');
-  if (!isAdmin && post.author.toString() !== userId.toString()) throw new Error('Not authorized');
+  if (!isAdmin && post.author.toString() !== userId.toString())
+    throw new Error('Not authorized');
 
   post.status = 'published';
   await post.save();
   return post;
 }
 
+/**
+ * Unpublish post
+ */
 export async function unpublishPost(postId, userId, isAdmin = false) {
   const post = await Post.findById(postId);
   if (!post) throw new Error('Post not found');
-  if (!isAdmin && post.author.toString() !== userId.toString()) throw new Error('Not authorized');
+  if (!isAdmin && post.author.toString() !== userId.toString())
+    throw new Error('Not authorized');
 
   post.status = 'unpublished';
   await post.save();
