@@ -2,18 +2,20 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import {
-  MainLayout,
-  DashboardLayout,
-  ProtectedRoute,
-  PublicRoute,
-} from './components/layout';
+import { MainLayout, DashboardLayout, ProtectedRoute, PublicRoute } from './components/layout';
 
 // Auth Pages
 import { Login, Register, ForgotPassword, ResetPassword } from './pages/auth';
 
 // Post Pages
-import { PostList, PostDetail, CreatePost, EditPost } from './pages/posts';
+import {
+  PostList,
+  PostDetail,
+  CreatePost,
+  EditPost,
+  LikedPosts,
+  FavoritedPosts,
+} from './pages/posts';
 
 // Dashboard Pages
 import { Dashboard } from './pages/dashboard';
@@ -24,8 +26,9 @@ import { Profile } from './pages/profile';
 // User Management
 import { UserList } from './pages/users';
 
-// Notifications
+// Notifications & Activity
 import { Notifications } from './pages/notifications';
+import { Activity } from './pages/activity';
 
 // Categories & Tags
 import { CategoryList } from './pages/categories';
@@ -76,14 +79,14 @@ function App() {
           />
 
           <Routes>
-            {/* Public Routes */}
+            {/* ==================== PUBLIC ROUTES ==================== */}
             <Route element={<MainLayout />}>
               <Route path={ROUTES.HOME} element={<Home />} />
               <Route path={ROUTES.POSTS} element={<PostList />} />
               <Route path={ROUTES.POST_DETAIL} element={<PostDetail />} />
             </Route>
 
-            {/* Auth Routes (Restricted - redirect if authenticated) */}
+            {/* ==================== AUTH ROUTES (Redirect if authenticated) ==================== */}
             <Route
               path={ROUTES.LOGIN}
               element={
@@ -117,7 +120,7 @@ function App() {
               }
             />
 
-            {/* Protected Routes - Dashboard Layout */}
+            {/* ==================== PROTECTED ROUTES (Dashboard Layout) ==================== */}
             <Route
               element={
                 <ProtectedRoute>
@@ -125,12 +128,14 @@ function App() {
                 </ProtectedRoute>
               }
             >
-              {/* Common Protected Routes */}
+              {/* ===== COMMON ROUTES (All Authenticated Users) ===== */}
               <Route path={ROUTES.DASHBOARD} element={<Dashboard />} />
               <Route path={ROUTES.PROFILE} element={<Profile />} />
-              <Route path={ROUTES.NOTIFICATIONS} element={<Notifications />} />
+              <Route path="/liked-posts" element={<LikedPosts />} />
+              <Route path="/favorited-posts" element={<FavoritedPosts />} />
+              <Route path="/activity" element={<Activity />} />
 
-              {/* Author & Admin Routes */}
+              {/* ===== AUTHOR & ADMIN ROUTES ===== */}
               <Route
                 path={ROUTES.CREATE_POST}
                 element={
@@ -147,8 +152,14 @@ function App() {
                   </ProtectedRoute>
                 }
               />
-
-              {/* Categories & Tags - Author/Admin only */}
+              <Route
+                path="/notifications"
+                element={
+                  <ProtectedRoute allowedRoles={[ROLES.AUTHOR, ROLES.ADMIN]}>
+                    <Notifications />
+                  </ProtectedRoute>
+                }
+              />
               <Route
                 path={ROUTES.CATEGORIES}
                 element={
@@ -166,7 +177,7 @@ function App() {
                 }
               />
 
-              {/* Author Only Routes */}
+              {/* ===== AUTHOR SPECIFIC ROUTES ===== */}
               <Route
                 path="/my-posts"
                 element={
@@ -184,7 +195,7 @@ function App() {
                 }
               />
 
-              {/* Admin Only Routes */}
+              {/* ===== ADMIN ONLY ROUTES ===== */}
               <Route
                 path={ROUTES.USERS}
                 element={
@@ -219,7 +230,7 @@ function App() {
               />
             </Route>
 
-            {/* 404 Not Found */}
+            {/* ==================== 404 NOT FOUND ==================== */}
             <Route path="*" element={<NotFound />} />
           </Routes>
         </AuthProvider>

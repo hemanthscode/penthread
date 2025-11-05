@@ -40,7 +40,7 @@ const PostList = () => {
 
   useEffect(() => {
     fetchPosts();
-  }, [debouncedSearch, selectedCategory, selectedTag, currentPage]);
+  }, [debouncedSearch, selectedCategory, selectedTag, currentPage, isAuthenticated]);
 
   const fetchPosts = async () => {
     setLoading(true);
@@ -55,7 +55,7 @@ const PostList = () => {
       if (selectedTag) params.tagId = selectedTag;
 
       const response = await postService.getPublicPosts(params);
-      
+
       if (response.success) {
         setPosts(response.data);
         setTotalPages(response.pagination?.totalPages || 1);
@@ -74,6 +74,13 @@ const PostList = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handlePostUpdate = (updatedPost) => {
+    // Update the specific post in the list
+    setPosts((prevPosts) =>
+      prevPosts.map((post) => (post._id === updatedPost._id ? updatedPost : post))
+    );
   };
 
   const handleReset = () => {
@@ -189,7 +196,7 @@ const PostList = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <PostCard post={post} />
+                <PostCard post={post} onUpdate={handlePostUpdate} />
               </motion.div>
             ))}
           </div>

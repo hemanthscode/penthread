@@ -1,5 +1,4 @@
-// src/components/layout/Navbar.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -8,6 +7,7 @@ import {
   Sun,
   Moon,
   Bell,
+  Activity,
   User,
   LogOut,
   Settings,
@@ -16,19 +16,37 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../hooks';
 import { useTheme } from '../../context/ThemeContext';
-import useNotificationStore from '../../store/useNotificationStore';
 import Button from '../common/Button';
 import Avatar from '../common/Avatar';
 import Dropdown, { DropdownItem } from '../common/Dropdown';
 import Badge from '../common/Badge';
+import notificationService from '../../services/notificationService';
 import { ROUTES } from '../../utils/constants';
 
 const Navbar = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const { user, isAuthenticated, logout } = useAuth();
+  const [unreadCount, setUnreadCount] = useState(0);
+  const { user, isAuthenticated, logout, isAuthor, isAdmin } = useAuth();
   const { theme, toggleTheme } = useTheme();
-  const { unreadCount } = useNotificationStore();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (isAuthenticated && (isAuthor() || isAdmin())) {
+      fetchUnreadCount();
+    }
+  }, [isAuthenticated, isAuthor, isAdmin]);
+
+  const fetchUnreadCount = async () => {
+    try {
+      const response = await notificationService.getNotifications();
+      if (response.success) {
+        const unread = response.data.filter((n) => !n.isRead).length;
+        setUnreadCount(unread);
+      }
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error);
+    }
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -39,6 +57,9 @@ const Navbar = () => {
     { name: 'Home', path: ROUTES.HOME },
     { name: 'Posts', path: ROUTES.POSTS },
   ];
+
+  const showNotifications = isAuthenticated && (isAuthor() || isAdmin());
+  const showActivity = isAuthenticated;
 
   return (
     <nav className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 sticky top-0 z-30">
@@ -81,21 +102,35 @@ const Navbar = () => {
 
             {isAuthenticated ? (
               <>
-                {/* Notifications */}
-                <button
-                  onClick={() => navigate(ROUTES.NOTIFICATIONS)}
-                  className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-                >
-                  <Bell className="h-5 w-5 text-gray-600 dark:text-gray-300" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
-                      {unreadCount > 9 ? '9+' : unreadCount}
-                    </span>
-                  )}
-                </button>
+                {/* Activity (All authenticated users) */}
+                {showActivity && (
+                  <button
+                    onClick={() => navigate('/activity')}
+                    className="p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title="Activity"
+                  >
+                    <Activity className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                  </button>
+                )}
+
+                {/* Notifications (Author/Admin only) */}
+                {showNotifications && (
+                  <button
+                    onClick={() => navigate('/notifications')}
+                    className="relative p-2 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                    title="Notifications"
+                  >
+                    <Bell className="h-5 w-5 text-gray-600 dark:text-gray-300" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 h-4 w-4 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                        {unreadCount > 9 ? '9+' : unreadCount}
+                      </span>
+                    )}
+                  </button>
+                )}
 
                 {/* Create Post Button (Author/Admin only) */}
-                {(user?.role === 'author' || user?.role === 'admin') && (
+                {(isAuthor() || isAdmin()) && (
                   <Button
                     onClick={() => navigate(ROUTES.CREATE_POST)}
                     size="sm"
@@ -124,24 +159,15 @@ const Navbar = () => {
                     </Badge>
                   </div>
 
-                  <DropdownItem
-                    icon={User}
-                    onClick={() => navigate(ROUTES.PROFILE)}
-                  >
+                  <DropdownItem icon={User} onClick={() => navigate(ROUTES.PROFILE)}>
                     Profile
                   </DropdownItem>
 
-                  <DropdownItem
-                    icon={BookOpen}
-                    onClick={() => navigate(ROUTES.DASHBOARD)}
-                  >
+                  <DropdownItem icon={BookOpen} onClick={() => navigate(ROUTES.DASHBOARD)}>
                     Dashboard
                   </DropdownItem>
 
-                  <DropdownItem
-                    icon={Settings}
-                    onClick={() => navigate(ROUTES.PROFILE)}
-                  >
+                  <DropdownItem icon={Settings} onClick={() => navigate(ROUTES.PROFILE)}>
                     Settings
                   </DropdownItem>
 
@@ -154,18 +180,10 @@ const Navbar = () => {
               </>
             ) : (
               <div className="flex items-center space-x-3">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => navigate(ROUTES.LOGIN)}
-                >
+                <Button variant="ghost" size="sm" onClick={() => navigate(ROUTES.LOGIN)}>
                   Login
                 </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => navigate(ROUTES.REGISTER)}
-                >
+                <Button variant="primary" size="sm" onClick={() => navigate(ROUTES.REGISTER)}>
                   Sign Up
                 </Button>
               </div>
@@ -223,18 +241,29 @@ const Navbar = () => {
                   >
                     Dashboard
                   </Link>
-                  <Link
-                    to={ROUTES.NOTIFICATIONS}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium px-2 py-1 flex items-center justify-between"
-                  >
-                    Notifications
-                    {unreadCount > 0 && (
-                      <Badge variant="danger" size="sm">
-                        {unreadCount}
-                      </Badge>
-                    )}
-                  </Link>
+                  {showActivity && (
+                    <Link
+                      to="/activity"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium px-2 py-1"
+                    >
+                      Activity
+                    </Link>
+                  )}
+                  {showNotifications && (
+                    <Link
+                      to="/notifications"
+                      onClick={() => setMobileMenuOpen(false)}
+                      className="text-gray-700 dark:text-gray-300 hover:text-primary-600 dark:hover:text-primary-400 transition-colors font-medium px-2 py-1 flex items-center justify-between"
+                    >
+                      Notifications
+                      {unreadCount > 0 && (
+                        <Badge variant="danger" size="sm">
+                          {unreadCount}
+                        </Badge>
+                      )}
+                    </Link>
+                  )}
                   <button
                     onClick={() => {
                       setMobileMenuOpen(false);

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FileText, Search, Eye, Edit, Trash2 } from 'lucide-react';
+import { FileText, Search, Eye, Edit, Trash2, MoreVertical, Upload, Download } from 'lucide-react';
 import { useAuth } from '../../hooks';
 import Container from '../../components/layout/Container';
 import PageHeader from '../../components/layout/PageHeader';
@@ -14,6 +14,7 @@ import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import Pagination from '../../components/common/Pagination';
+import Dropdown, { DropdownItem } from '../../components/common/Dropdown';
 import useDebounce from '../../hooks/useDebounce';
 import postService from '../../services/postService';
 import { ROUTES } from '../../utils/constants';
@@ -31,7 +32,7 @@ const MyPosts = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleting, setDeleting] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -61,9 +62,39 @@ const MyPosts = () => {
     }
   };
 
+  const handlePublish = async (postId) => {
+    setActionLoading(postId);
+    try {
+      const response = await postService.publishPost(postId);
+      if (response.success) {
+        toast.success('Post published successfully');
+        fetchMyPosts();
+      }
+    } catch (error) {
+      toast.error('Failed to publish post');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUnpublish = async (postId) => {
+    setActionLoading(postId);
+    try {
+      const response = await postService.unpublishPost(postId);
+      if (response.success) {
+        toast.success('Post unpublished successfully');
+        fetchMyPosts();
+      }
+    } catch (error) {
+      toast.error('Failed to unpublish post');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleDelete = async () => {
     if (!selectedPost) return;
-    setDeleting(true);
+    setActionLoading(selectedPost._id);
     try {
       const response = await postService.deletePost(selectedPost._id);
       if (response.success) {
@@ -75,7 +106,7 @@ const MyPosts = () => {
     } catch (error) {
       toast.error('Failed to delete post');
     } finally {
-      setDeleting(false);
+      setActionLoading(null);
     }
   };
 
@@ -104,6 +135,9 @@ const MyPosts = () => {
     { value: 'published', label: 'Published' },
     { value: 'unpublished', label: 'Unpublished' },
   ];
+
+  const canPublish = (status) => ['draft', 'approved', 'unpublished'].includes(status);
+  const canUnpublish = (status) => status === 'published';
 
   return (
     <Container className="py-8">
@@ -179,7 +213,7 @@ const MyPosts = () => {
                       </div>
                     </div>
 
-                    <div className="flex space-x-2 ml-4">
+                    <div className="flex items-center space-x-2 ml-4">
                       <Button
                         variant="outline"
                         size="sm"
@@ -189,26 +223,54 @@ const MyPosts = () => {
                         View
                       </Button>
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        icon={Edit}
-                        onClick={() => navigate(ROUTES.EDIT_POST.replace(':id', post._id))}
+                      <Dropdown
+                        trigger={
+                          <Button variant="outline" size="sm" icon={MoreVertical}>
+                            Actions
+                          </Button>
+                        }
+                        align="right"
                       >
-                        Edit
-                      </Button>
+                        <DropdownItem
+                          icon={Edit}
+                          onClick={() => navigate(ROUTES.EDIT_POST.replace(':id', post._id))}
+                        >
+                          Edit Post
+                        </DropdownItem>
 
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        icon={Trash2}
-                        onClick={() => {
-                          setSelectedPost(post);
-                          setShowDeleteModal(true);
-                        }}
-                      >
-                        Delete
-                      </Button>
+                        {canPublish(post.status) && (
+                          <DropdownItem
+                            icon={Upload}
+                            onClick={() => handlePublish(post._id)}
+                            disabled={actionLoading === post._id}
+                          >
+                            Publish
+                          </DropdownItem>
+                        )}
+
+                        {canUnpublish(post.status) && (
+                          <DropdownItem
+                            icon={Download}
+                            onClick={() => handleUnpublish(post._id)}
+                            disabled={actionLoading === post._id}
+                          >
+                            Unpublish
+                          </DropdownItem>
+                        )}
+
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+
+                        <DropdownItem
+                          icon={Trash2}
+                          onClick={() => {
+                            setSelectedPost(post);
+                            setShowDeleteModal(true);
+                          }}
+                          danger
+                        >
+                          Delete
+                        </DropdownItem>
+                      </Dropdown>
                     </div>
                   </div>
                 </Card>
@@ -243,7 +305,11 @@ const MyPosts = () => {
             >
               Cancel
             </Button>
-            <Button variant="danger" loading={deleting} onClick={handleDelete}>
+            <Button
+              variant="danger"
+              loading={actionLoading === selectedPost?._id}
+              onClick={handleDelete}
+            >
               Delete
             </Button>
           </>

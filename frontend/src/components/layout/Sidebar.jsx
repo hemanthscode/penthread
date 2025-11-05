@@ -10,6 +10,8 @@ import {
   Settings,
   UserCircle,
   Shield,
+  Heart,
+  Bookmark,
 } from 'lucide-react';
 import { useAuth } from '../../hooks';
 import { ROUTES } from '../../utils/constants';
@@ -23,6 +25,8 @@ const Sidebar = () => {
     const commonItems = [
       { name: 'Dashboard', icon: Home, path: ROUTES.DASHBOARD },
       { name: 'My Profile', icon: UserCircle, path: ROUTES.PROFILE },
+      { name: 'Liked Posts', icon: Heart, path: '/liked-posts' },
+      { name: 'Saved Posts', icon: Bookmark, path: '/favorited-posts' },
     ];
 
     const authorItems = [

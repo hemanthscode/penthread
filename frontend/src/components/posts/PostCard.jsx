@@ -1,15 +1,137 @@
-// src/components/posts/PostCard.jsx
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Heart, MessageCircle, Eye, Calendar } from 'lucide-react';
+import { Heart, MessageCircle, Eye, Calendar, Bookmark } from 'lucide-react';
+import { useAuth } from '../../hooks';
 import Card from '../common/Card';
 import Badge from '../common/Badge';
 import Avatar from '../common/Avatar';
+import interactionService from '../../services/interactionService';
 import { formatRelativeTime, truncateText } from '../../utils/helpers';
 import { ROUTES } from '../../utils/constants';
+import toast from 'react-hot-toast';
 
-const PostCard = ({ post }) => {
+const PostCard = ({ post: initialPost, onUpdate }) => {
+  const { isAuthenticated } = useAuth();
+  const [post, setPost] = useState(initialPost);
+  const [actionLoading, setActionLoading] = useState(null);
+
   const postUrl = ROUTES.POST_DETAIL.replace(':id', post._id);
+
+  const handleLike = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast.error('Please login to like posts');
+      return;
+    }
+
+    setActionLoading('like');
+
+    // Optimistic update
+    const previousState = { ...post };
+    const wasLiked = post.userInteractions?.liked || false;
+
+    const updatedPost = {
+      ...post,
+      userInteractions: {
+        ...post.userInteractions,
+        liked: !wasLiked,
+      },
+      likesCount: wasLiked ? post.likesCount - 1 : post.likesCount + 1,
+    };
+
+    setPost(updatedPost);
+
+    try {
+      const response = await interactionService.toggleLike(post._id);
+      if (response.success) {
+        // Update with server response
+        const finalPost = {
+          ...post,
+          userInteractions: {
+            ...post.userInteractions,
+            liked: response.data.liked,
+          },
+          likesCount: response.data.liked ? post.likesCount + 1 : post.likesCount - 1,
+        };
+        setPost(finalPost);
+        
+        // Notify parent component
+        if (onUpdate) {
+          onUpdate(finalPost);
+        }
+      }
+    } catch (error) {
+      // Rollback on error
+      setPost(previousState);
+      toast.error('Failed to update like');
+      console.error('Like error:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleFavorite = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (!isAuthenticated) {
+      toast.error('Please login to save posts');
+      return;
+    }
+
+    setActionLoading('favorite');
+
+    // Optimistic update
+    const previousState = { ...post };
+    const wasFavorited = post.userInteractions?.favorited || false;
+
+    const updatedPost = {
+      ...post,
+      userInteractions: {
+        ...post.userInteractions,
+        favorited: !wasFavorited,
+      },
+      favoritesCount: wasFavorited ? post.favoritesCount - 1 : post.favoritesCount + 1,
+    };
+
+    setPost(updatedPost);
+
+    try {
+      const response = await interactionService.toggleFavorite(post._id);
+      if (response.success) {
+        // Update with server response
+        const finalPost = {
+          ...post,
+          userInteractions: {
+            ...post.userInteractions,
+            favorited: response.data.favorited,
+          },
+          favoritesCount: response.data.favorited
+            ? post.favoritesCount + 1
+            : post.favoritesCount - 1,
+        };
+        setPost(finalPost);
+        
+        // Notify parent component
+        if (onUpdate) {
+          onUpdate(finalPost);
+        }
+      }
+    } catch (error) {
+      // Rollback on error
+      setPost(previousState);
+      toast.error('Failed to update favorite');
+      console.error('Favorite error:', error);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const isLiked = post.userInteractions?.liked || false;
+  const isFavorited = post.userInteractions?.favorited || false;
 
   return (
     <Card hover className="h-full flex flex-col">
@@ -45,7 +167,7 @@ const PostCard = ({ post }) => {
 
         {/* Excerpt */}
         <p className="text-gray-600 dark:text-gray-400 text-sm mb-4 flex-1 line-clamp-3">
-          {truncateText(post.content, 150)}
+          {truncateText(post.content?.replace(/<[^>]*>/g, ''), 150)}
         </p>
 
         {/* Author and Date */}
@@ -64,26 +186,46 @@ const PostCard = ({ post }) => {
           </div>
         </div>
 
-        {/* Stats */}
-        <div className="flex items-center justify-between text-sm text-gray-500 dark:text-gray-400">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center">
-              <Heart
-                className={`h-4 w-4 mr-1 ${
-                  post.userInteractions?.liked ? 'fill-red-500 text-red-500' : ''
-                }`}
-              />
+        {/* Stats and Actions */}
+        <div className="flex items-center justify-between text-sm">
+          <div className="flex items-center space-x-4 text-gray-500 dark:text-gray-400">
+            <button
+              onClick={handleLike}
+              disabled={actionLoading === 'like' || !isAuthenticated}
+              className={`flex items-center transition-colors ${
+                isLiked ? 'text-red-500' : 'hover:text-red-500'
+              } ${actionLoading === 'like' ? 'opacity-50' : ''} ${
+                !isAuthenticated ? 'cursor-not-allowed' : 'cursor-pointer'
+              }`}
+              title={isAuthenticated ? (isLiked ? 'Unlike' : 'Like') : 'Login to like'}
+            >
+              <Heart className={`h-4 w-4 mr-1 ${isLiked ? 'fill-red-500' : ''}`} />
               {post.likesCount || 0}
-            </div>
+            </button>
+
             <div className="flex items-center">
               <MessageCircle className="h-4 w-4 mr-1" />
               {post.commentsCount || 0}
             </div>
+
             <div className="flex items-center">
               <Eye className="h-4 w-4 mr-1" />
               {post.viewsCount || 0}
             </div>
           </div>
+
+          {isAuthenticated && (
+            <button
+              onClick={handleFavorite}
+              disabled={actionLoading === 'favorite'}
+              className={`flex items-center transition-colors ${
+                isFavorited ? 'text-primary-600' : 'text-gray-400 hover:text-primary-600'
+              } ${actionLoading === 'favorite' ? 'opacity-50' : ''}`}
+              title={isFavorited ? 'Remove from favorites' : 'Add to favorites'}
+            >
+              <Bookmark className={`h-4 w-4 ${isFavorited ? 'fill-primary-600' : ''}`} />
+            </button>
+          )}
         </div>
       </div>
     </Card>

@@ -1,5 +1,4 @@
-// src/pages/posts/PostDetail.jsx
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
@@ -14,9 +13,6 @@ import {
   ArrowLeft,
 } from 'lucide-react';
 import { useAuth } from '../../hooks';
-import usePost from '../../hooks/usePost';
-import usePostStore from '../../store/usePostStore';
-import useComments from '../../hooks/useComments';
 import Container from '../../components/layout/Container';
 import Breadcrumbs from '../../components/layout/Breadcrumbs';
 import Button from '../../components/common/Button';
@@ -25,6 +21,8 @@ import Avatar from '../../components/common/Avatar';
 import Loader from '../../components/common/Loader';
 import Modal from '../../components/common/Modal';
 import CommentSection from '../../components/posts/CommentSection';
+import postService from '../../services/postService';
+import interactionService from '../../services/interactionService';
 import { formatDate } from '../../utils/helpers';
 import { ROUTES } from '../../utils/constants';
 import toast from 'react-hot-toast';
@@ -33,30 +31,123 @@ const PostDetail = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, isAuthenticated, isAdmin } = useAuth();
-  const { post, loading } = usePost(id);
-  const { toggleLike, toggleFavorite, deletePost } = usePostStore();
-  const { comments } = useComments(id);
+  
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null);
 
-  const isAuthor = post?.author?._id === user?.id;
+  useEffect(() => {
+    fetchPost();
+    recordView();
+  }, [id]);
+
+  const fetchPost = async () => {
+    setLoading(true);
+    try {
+      const response = await postService.getPost(id);
+      if (response.success) {
+        setPost(response.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch post:', error);
+      toast.error('Failed to load post');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const recordView = async () => {
+    try {
+      await interactionService.recordView(id);
+    } catch (error) {
+      console.error('Failed to record view:', error);
+    }
+  };
+
+  const isAuthor = post?.author?._id === user?._id;
   const canEdit = isAuthenticated && (isAuthor || isAdmin());
   const canDelete = isAuthenticated && (isAuthor || isAdmin());
 
-  const handleLike = () => {
+  const handleLike = async () => {
     if (!isAuthenticated) {
       toast.error('Please login to like posts');
       return;
     }
-    toggleLike(id);
+
+    setActionLoading('like');
+
+    // Optimistic update
+    const previousState = { ...post };
+    const wasLiked = post.userInteractions?.liked;
+
+    setPost((prev) => ({
+      ...prev,
+      userInteractions: {
+        ...prev.userInteractions,
+        liked: !wasLiked,
+      },
+      likesCount: wasLiked ? prev.likesCount - 1 : prev.likesCount + 1,
+    }));
+
+    try {
+      const response = await interactionService.toggleLike(id);
+      if (response.success) {
+        setPost((prev) => ({
+          ...prev,
+          userInteractions: {
+            ...prev.userInteractions,
+            liked: response.data.liked,
+          },
+        }));
+      }
+    } catch (error) {
+      setPost(previousState);
+      toast.error('Failed to update like');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
-  const handleFavorite = () => {
+  const handleFavorite = async () => {
     if (!isAuthenticated) {
-      toast.error('Please login to favorite posts');
+      toast.error('Please login to save posts');
       return;
     }
-    toggleFavorite(id);
+
+    setActionLoading('favorite');
+
+    // Optimistic update
+    const previousState = { ...post };
+    const wasFavorited = post.userInteractions?.favorited;
+
+    setPost((prev) => ({
+      ...prev,
+      userInteractions: {
+        ...prev.userInteractions,
+        favorited: !wasFavorited,
+      },
+      favoritesCount: wasFavorited ? prev.favoritesCount - 1 : prev.favoritesCount + 1,
+    }));
+
+    try {
+      const response = await interactionService.toggleFavorite(id);
+      if (response.success) {
+        setPost((prev) => ({
+          ...prev,
+          userInteractions: {
+            ...prev.userInteractions,
+            favorited: response.data.favorited,
+          },
+        }));
+      }
+    } catch (error) {
+      setPost(previousState);
+      toast.error('Failed to update favorite');
+    } finally {
+      setActionLoading(null);
+    }
   };
 
   const handleShare = async () => {
@@ -75,12 +166,18 @@ const PostDetail = () => {
 
   const handleDelete = async () => {
     setDeleting(true);
-    const result = await deletePost(id);
-    if (result.success) {
-      navigate(ROUTES.POSTS);
+    try {
+      const response = await postService.deletePost(id);
+      if (response.success) {
+        toast.success('Post deleted successfully');
+        navigate(ROUTES.POSTS);
+      }
+    } catch (error) {
+      toast.error('Failed to delete post');
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
     }
-    setDeleting(false);
-    setShowDeleteModal(false);
   };
 
   if (loading) {
@@ -100,15 +197,13 @@ const PostDetail = () => {
     );
   }
 
+  const isLiked = post.userInteractions?.liked || false;
+  const isFavorited = post.userInteractions?.favorited || false;
+
   return (
     <Container size="default" className="py-8">
       {/* Breadcrumbs */}
-      <Breadcrumbs
-        items={[
-          { name: 'Posts', path: ROUTES.POSTS },
-          { name: post.title },
-        ]}
-      />
+      <Breadcrumbs items={[{ name: 'Posts', path: ROUTES.POSTS }, { name: post.title }]} />
 
       {/* Back Button */}
       <Button
@@ -129,7 +224,6 @@ const PostDetail = () => {
             animate={{ opacity: 1, y: 0 }}
             className="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden"
           >
-            {/* Post Header */}
             <div className="p-8">
               {/* Categories */}
               {post.categories && post.categories.length > 0 && (
@@ -157,7 +251,7 @@ const PostDetail = () => {
                     </p>
                     <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
                       <Calendar className="h-4 w-4 mr-1" />
-                      {formatDate(post.createdAt, 'MMM dd, yyyy')}
+                      {formatDate(post.createdAt)}
                     </div>
                   </div>
                 </div>
@@ -199,15 +293,14 @@ const PostDetail = () => {
                 </div>
                 <div className="flex items-center">
                   <MessageCircle className="h-4 w-4 mr-1" />
-                  {comments.length} comments
+                  {post.commentsCount || 0} comments
                 </div>
               </div>
 
               {/* Content */}
-              <div
-                className="prose dark:prose-invert max-w-none mb-8"
-                dangerouslySetInnerHTML={{ __html: post.content }}
-              />
+              <div className="prose dark:prose-invert max-w-none mb-8">
+                {post.content}
+              </div>
 
               {/* Tags */}
               {post.tags && post.tags.length > 0 && (
@@ -223,20 +316,24 @@ const PostDetail = () => {
               {/* Interaction Buttons */}
               <div className="flex items-center space-x-4 pt-6 border-t border-gray-200 dark:border-gray-700">
                 <Button
-                  variant={post.userInteractions?.liked ? 'primary' : 'outline'}
+                  variant={isLiked ? 'primary' : 'outline'}
                   size="sm"
                   icon={Heart}
                   onClick={handleLike}
+                  loading={actionLoading === 'like'}
+                  disabled={actionLoading === 'like'}
                 >
-                  {post.userInteractions?.liked ? 'Liked' : 'Like'}
+                  {isLiked ? 'Liked' : 'Like'}
                 </Button>
                 <Button
-                  variant={post.userInteractions?.favorited ? 'primary' : 'outline'}
+                  variant={isFavorited ? 'primary' : 'outline'}
                   size="sm"
                   icon={Bookmark}
                   onClick={handleFavorite}
+                  loading={actionLoading === 'favorite'}
+                  disabled={actionLoading === 'favorite'}
                 >
-                  {post.userInteractions?.favorited ? 'Saved' : 'Save'}
+                  {isFavorited ? 'Saved' : 'Save'}
                 </Button>
                 <Button variant="outline" size="sm" icon={Share2} onClick={handleShare}>
                   Share

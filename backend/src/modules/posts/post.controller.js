@@ -22,12 +22,19 @@ export async function getPublicPosts(req, res, next) {
       limit: parseInt(req.query.limit) || 10,
       sortBy: req.query.sortBy || 'createdAt',
       order: req.query.order || 'desc',
-      userId: req.user?._id,
+      userId: req.user?._id, // Pass userId if authenticated
     };
+
+    console.log('🔍 Fetching posts for user:', options.userId); // DEBUG
 
     const posts = await postService.getPosts(filter, options);
     const total = await postService.countPosts(filter);
     const totalPages = Math.ceil(total / options.limit);
+
+    // DEBUG: Log first post's interactions
+    if (posts.length > 0) {
+      console.log('📊 First post interactions:', posts[0].userInteractions);
+    }
 
     res.json({
       success: true,
@@ -49,8 +56,17 @@ export async function getPublicPosts(req, res, next) {
  */
 export async function getPost(req, res, next) {
   try {
-    const post = await postService.getPostById(req.params.postId, req.user?._id);
-    if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+    const userId = req.user?._id; // Pass userId if authenticated
+    console.log('🔍 Fetching post for user:', userId); // DEBUG
+    
+    const post = await postService.getPostById(req.params.postId, userId);
+    
+    if (!post) {
+      return res.status(404).json({ success: false, message: 'Post not found' });
+    }
+
+    console.log('📊 Post interactions:', post.userInteractions); // DEBUG
+    
     res.json({ success: true, data: post });
   } catch (err) {
     next(err);

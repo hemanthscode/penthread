@@ -1,5 +1,6 @@
 import Post from './post.model.js';
 import Comment from '../comments/comment.model.js';
+import Interaction from '../interactions/interaction.model.js';
 import * as interactionService from '../interactions/interaction.service.js';
 
 function assertValidId(postId) {
@@ -12,7 +13,7 @@ function assertValidId(postId) {
 export async function createPost(postData) {
   const post = new Post(postData);
   await post.save();
-  return getPostById(post._id);
+  return getPostById(post._id, postData.author);
 }
 
 /**
@@ -20,6 +21,7 @@ export async function createPost(postData) {
  */
 export async function getPostById(postId, userId = null) {
   assertValidId(postId);
+  
   const post = await Post.findById(postId)
     .populate('author', 'name email role')
     .populate('categories', 'name')
@@ -34,9 +36,13 @@ export async function getPostById(postId, userId = null) {
   });
   post._doc.commentsCount = commentsCount;
 
+  // Add user interactions if userId provided
   if (userId) {
     const interactions = await interactionService.getUserInteractions(userId, postId);
     post._doc.userInteractions = interactions;
+  } else {
+    // Default interactions for guests
+    post._doc.userInteractions = { liked: false, favorited: false };
   }
 
   return post;
@@ -58,6 +64,11 @@ export async function getPosts(filter = {}, options = {}) {
     .populate('tags', 'name');
 
   const posts = await query.exec();
+  
+  if (posts.length === 0) {
+    return [];
+  }
+
   const postIds = posts.map((p) => p._id);
 
   // Bulk fetch comment counts
@@ -76,21 +87,26 @@ export async function getPosts(filter = {}, options = {}) {
     },
   ]);
 
-  const commentCountMap = new Map(commentCounts.map((item) => [item._id.toString(), item.count]));
+  const commentCountMap = new Map(
+    commentCounts.map((item) => [item._id.toString(), item.count])
+  );
 
   // Add interactions and comment counts
   if (userId) {
     const interactionsMap = await interactionService.getUserInteractionsForPosts(userId, postIds);
 
     posts.forEach((post) => {
-      post._doc.userInteractions = interactionsMap.get(post._id.toString()) || {
+      const postIdStr = post._id.toString();
+      post._doc.userInteractions = interactionsMap.get(postIdStr) || {
         liked: false,
         favorited: false,
       };
-      post._doc.commentsCount = commentCountMap.get(post._id.toString()) || 0;
+      post._doc.commentsCount = commentCountMap.get(postIdStr) || 0;
     });
   } else {
+    // Add default interactions for guests
     posts.forEach((post) => {
+      post._doc.userInteractions = { liked: false, favorited: false };
       post._doc.commentsCount = commentCountMap.get(post._id.toString()) || 0;
     });
   }
@@ -109,12 +125,17 @@ export async function countPosts(filter = {}) {
  * Update post
  */
 export async function updatePost(postId, updateData, userId, isAdmin = false) {
+  assertValidId(postId);
+  
   const post = await Post.findById(postId);
   if (!post) throw new Error('Post not found');
 
   if (!isAdmin && post.author.toString() !== userId.toString()) {
     throw new Error('Not authorized to update this post');
   }
+
+  // Don't allow changing author
+  delete updateData.author;
 
   Object.assign(post, updateData);
   await post.save();
@@ -123,9 +144,11 @@ export async function updatePost(postId, updateData, userId, isAdmin = false) {
 }
 
 /**
- * Delete post
+ * Delete post and related data
  */
 export async function deletePost(postId, userId, isAdmin = false) {
+  assertValidId(postId);
+  
   const post = await Post.findById(postId);
   if (!post) throw new Error('Post not found');
 
@@ -133,47 +156,106 @@ export async function deletePost(postId, userId, isAdmin = false) {
     throw new Error('Not authorized to delete this post');
   }
 
-  await post.deleteOne();
+  // Delete related data in parallel
+  await Promise.all([
+    post.deleteOne(),
+    Comment.deleteMany({ post: postId }),
+    Interaction.deleteMany({ post: postId }),
+  ]);
 }
 
 /**
  * Change post status
  */
 async function changeStatus(postId, newStatus) {
+  assertValidId(postId);
+  
   const post = await Post.findById(postId);
   if (!post) throw new Error('Post not found');
+  
   post.status = newStatus;
   await post.save();
+  
   return post;
 }
 
+/**
+ * Admin: Approve post
+ */
 export const approvePost = (postId) => changeStatus(postId, 'approved');
+
+/**
+ * Admin: Reject post
+ */
 export const rejectPost = (postId) => changeStatus(postId, 'rejected');
 
 /**
- * Publish post
+ * Publish post (author or admin)
  */
 export async function publishPost(postId, userId, isAdmin = false) {
+  assertValidId(postId);
+  
   const post = await Post.findById(postId);
   if (!post) throw new Error('Post not found');
-  if (!isAdmin && post.author.toString() !== userId.toString())
+  
+  if (!isAdmin && post.author.toString() !== userId.toString()) {
     throw new Error('Not authorized');
+  }
+
+  // Only approved or draft posts can be published
+  if (!['draft', 'approved', 'unpublished'].includes(post.status)) {
+    throw new Error(`Cannot publish post with status: ${post.status}`);
+  }
 
   post.status = 'published';
   await post.save();
+  
   return post;
 }
 
 /**
- * Unpublish post
+ * Unpublish post (author or admin)
  */
 export async function unpublishPost(postId, userId, isAdmin = false) {
+  assertValidId(postId);
+  
   const post = await Post.findById(postId);
   if (!post) throw new Error('Post not found');
-  if (!isAdmin && post.author.toString() !== userId.toString())
+  
+  if (!isAdmin && post.author.toString() !== userId.toString()) {
     throw new Error('Not authorized');
+  }
+
+  // Only published posts can be unpublished
+  if (post.status !== 'published') {
+    throw new Error('Only published posts can be unpublished');
+  }
 
   post.status = 'unpublished';
   await post.save();
+  
   return post;
+}
+
+/**
+ * Get post statistics
+ */
+export async function getPostStats(postId) {
+  assertValidId(postId);
+  
+  const post = await Post.findById(postId);
+  if (!post) throw new Error('Post not found');
+
+  const [commentsCount, likesCount, favoritesCount] = await Promise.all([
+    Comment.countDocuments({ post: postId, status: 'approved' }),
+    Interaction.countDocuments({ post: postId, liked: true }),
+    Interaction.countDocuments({ post: postId, favorited: true }),
+  ]);
+
+  return {
+    viewsCount: post.viewsCount,
+    likesCount,
+    favoritesCount,
+    commentsCount,
+  };
 }

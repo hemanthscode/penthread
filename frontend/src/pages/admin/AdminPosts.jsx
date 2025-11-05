@@ -1,7 +1,18 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { FileText, Search, Eye, Edit, Trash2, Check, X } from 'lucide-react';
+import {
+  FileText,
+  Search,
+  Eye,
+  Edit,
+  Trash2,
+  MoreVertical,
+  Check,
+  X,
+  Upload,
+  Download,
+} from 'lucide-react';
 import Container from '../../components/layout/Container';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
@@ -13,6 +24,7 @@ import Modal from '../../components/common/Modal';
 import Loader from '../../components/common/Loader';
 import EmptyState from '../../components/common/EmptyState';
 import Pagination from '../../components/common/Pagination';
+import Dropdown, { DropdownItem } from '../../components/common/Dropdown';
 import useDebounce from '../../hooks/useDebounce';
 import postService from '../../services/postService';
 import { ROUTES } from '../../utils/constants';
@@ -29,7 +41,7 @@ const AdminPosts = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [selectedPost, setSelectedPost] = useState(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [actionLoading, setActionLoading] = useState(null);
 
   const debouncedSearch = useDebounce(searchQuery, 500);
 
@@ -61,7 +73,7 @@ const AdminPosts = () => {
   };
 
   const handleApprove = async (postId) => {
-    setActionLoading(true);
+    setActionLoading(postId);
     try {
       const response = await postService.approvePost(postId);
       if (response.success) {
@@ -72,12 +84,12 @@ const AdminPosts = () => {
       toast.error('Failed to approve post');
       console.error('Approve error:', error);
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
   const handleReject = async (postId) => {
-    setActionLoading(true);
+    setActionLoading(postId);
     try {
       const response = await postService.rejectPost(postId);
       if (response.success) {
@@ -88,13 +100,43 @@ const AdminPosts = () => {
       toast.error('Failed to reject post');
       console.error('Reject error:', error);
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
+    }
+  };
+
+  const handlePublish = async (postId) => {
+    setActionLoading(postId);
+    try {
+      const response = await postService.publishPost(postId);
+      if (response.success) {
+        toast.success('Post published successfully');
+        fetchPosts();
+      }
+    } catch (error) {
+      toast.error('Failed to publish post');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  const handleUnpublish = async (postId) => {
+    setActionLoading(postId);
+    try {
+      const response = await postService.unpublishPost(postId);
+      if (response.success) {
+        toast.success('Post unpublished successfully');
+        fetchPosts();
+      }
+    } catch (error) {
+      toast.error('Failed to unpublish post');
+    } finally {
+      setActionLoading(null);
     }
   };
 
   const handleDelete = async () => {
     if (!selectedPost) return;
-    setActionLoading(true);
+    setActionLoading(selectedPost._id);
     try {
       const response = await postService.deletePost(selectedPost._id);
       if (response.success) {
@@ -107,7 +149,7 @@ const AdminPosts = () => {
       toast.error('Failed to delete post');
       console.error('Delete error:', error);
     } finally {
-      setActionLoading(false);
+      setActionLoading(null);
     }
   };
 
@@ -136,6 +178,11 @@ const AdminPosts = () => {
     { value: 'published', label: 'Published' },
     { value: 'unpublished', label: 'Unpublished' },
   ];
+
+  const canApprove = (status) => status === 'pending';
+  const canReject = (status) => status === 'pending';
+  const canPublish = (status) => ['draft', 'approved', 'unpublished'].includes(status);
+  const canUnpublish = (status) => status === 'published';
 
   return (
     <Container className="py-8">
@@ -203,7 +250,7 @@ const AdminPosts = () => {
                       </div>
                     </div>
 
-                    <div className="flex flex-col space-y-2 ml-4">
+                    <div className="flex items-center space-x-2 ml-4">
                       <Button
                         variant="outline"
                         size="sm"
@@ -213,51 +260,79 @@ const AdminPosts = () => {
                         View
                       </Button>
 
-                      {post.status === 'pending' && (
-                        <>
-                          <Button
-                            variant="primary"
-                            size="sm"
+                      <Dropdown
+                        trigger={
+                          <Button variant="outline" size="sm" icon={MoreVertical}>
+                            Actions
+                          </Button>
+                        }
+                        align="right"
+                      >
+                        {canApprove(post.status) && (
+                          <DropdownItem
                             icon={Check}
                             onClick={() => handleApprove(post._id)}
-                            loading={actionLoading}
-                            disabled={actionLoading}
+                            disabled={actionLoading === post._id}
                           >
                             Approve
-                          </Button>
-                          <Button
-                            variant="danger"
-                            size="sm"
+                          </DropdownItem>
+                        )}
+
+                        {canReject(post.status) && (
+                          <DropdownItem
                             icon={X}
                             onClick={() => handleReject(post._id)}
-                            loading={actionLoading}
-                            disabled={actionLoading}
+                            disabled={actionLoading === post._id}
+                            danger
                           >
                             Reject
-                          </Button>
-                        </>
-                      )}
+                          </DropdownItem>
+                        )}
 
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        icon={Edit}
-                        onClick={() => navigate(ROUTES.EDIT_POST.replace(':id', post._id))}
-                      >
-                        Edit
-                      </Button>
+                        {(canApprove(post.status) || canReject(post.status)) && (
+                          <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+                        )}
 
-                      <Button
-                        variant="danger"
-                        size="sm"
-                        icon={Trash2}
-                        onClick={() => {
-                          setSelectedPost(post);
-                          setShowDeleteModal(true);
-                        }}
-                      >
-                        Delete
-                      </Button>
+                        <DropdownItem
+                          icon={Edit}
+                          onClick={() => navigate(ROUTES.EDIT_POST.replace(':id', post._id))}
+                        >
+                          Edit Post
+                        </DropdownItem>
+
+                        {canPublish(post.status) && (
+                          <DropdownItem
+                            icon={Upload}
+                            onClick={() => handlePublish(post._id)}
+                            disabled={actionLoading === post._id}
+                          >
+                            Publish
+                          </DropdownItem>
+                        )}
+
+                        {canUnpublish(post.status) && (
+                          <DropdownItem
+                            icon={Download}
+                            onClick={() => handleUnpublish(post._id)}
+                            disabled={actionLoading === post._id}
+                          >
+                            Unpublish
+                          </DropdownItem>
+                        )}
+
+                        <div className="border-t border-gray-200 dark:border-gray-700 my-1" />
+
+                        <DropdownItem
+                          icon={Trash2}
+                          onClick={() => {
+                            setSelectedPost(post);
+                            setShowDeleteModal(true);
+                          }}
+                          danger
+                        >
+                          Delete
+                        </DropdownItem>
+                      </Dropdown>
                     </div>
                   </div>
                 </Card>
@@ -292,7 +367,11 @@ const AdminPosts = () => {
             >
               Cancel
             </Button>
-            <Button variant="danger" loading={actionLoading} onClick={handleDelete}>
+            <Button
+              variant="danger"
+              loading={actionLoading === selectedPost?._id}
+              onClick={handleDelete}
+            >
               Delete
             </Button>
           </>

@@ -6,9 +6,9 @@ import { createPostSchema, updatePostSchema } from './post.validators.js';
 
 const router = Router();
 
-// ==================== PUBLIC ROUTES ====================
-// Get published posts (for guests and all users)
-router.get('/public', postController.getPublicPosts);
+// ==================== PUBLIC ROUTES (with optional auth) ====================
+// Get published posts - supports both guests and authenticated users
+router.get('/public', authMiddleware([], true), postController.getPublicPosts);
 
 // ==================== AUTHOR ROUTES ====================
 // Author's own posts (all statuses)
@@ -36,8 +36,8 @@ router.delete('/:postId', authMiddleware(['author', 'admin']), postController.de
 router.patch('/:postId/publish', authMiddleware(['author', 'admin']), postController.publishPost);
 router.patch('/:postId/unpublish', authMiddleware(['author', 'admin']), postController.unpublishPost);
 
-// ==================== SINGLE POST (MUST BE LAST) ====================
-// Get single post (public) - MUST be at the end to avoid matching other routes
-router.get('/:postId', postController.getPost);
+// ==================== SINGLE POST (MUST BE LAST with optional auth) ====================
+// Get single post - supports both guests and authenticated users
+router.get('/:postId', authMiddleware([], true), postController.getPost);
 
 export default router;
