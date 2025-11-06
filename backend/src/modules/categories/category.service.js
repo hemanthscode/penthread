@@ -1,46 +1,140 @@
+/**
+ * Category Service
+ * 
+ * Handles category business logic.
+ * 
+ * @module modules/categories/service
+ */
+
 import Category from './category.model.js';
+import Post from '../posts/post.model.js';
+import AppError from '../../utils/AppError.js';
+import logger from '../../config/logger.js';
 
 /**
- * Create a new category
+ * Creates a new category
  */
 export async function createCategory(data) {
-  const category = new Category(data);
+  const { name, description } = data;
+
+  // Check if category already exists
+  const existing = await Category.findOne({ 
+    name: { $regex: new RegExp(`^${name}$`, 'i') } 
+  });
+
+  if (existing) {
+    throw AppError.conflict('Category already exists');
+  }
+
+  const category = new Category({ name, description });
   await category.save();
+
+  logger.info(`Category created: ${category.name}`);
+
   return category;
 }
 
 /**
- * Get all categories sorted by name
+ * Gets all categories with post counts
  */
-export async function getAllCategories() {
-  return Category.find().sort({ name: 1 });
+export async function getAllCategories(options = {}) {
+  const { includeEmpty = true } = options;
+
+  const filter = includeEmpty ? {} : { postCount: { $gt: 0 } };
+
+  const categories = await Category.find(filter).sort({ name: 1 });
+
+  return categories;
 }
 
 /**
- * Get a single category by ID
+ * Gets a single category by ID
  */
 export async function getCategoryById(categoryId) {
-  return Category.findById(categoryId);
+  const category = await Category.findById(categoryId);
+
+  if (!category) {
+    throw AppError.notFound('Category not found');
+  }
+
+  return category;
 }
 
 /**
- * Update category
+ * Updates a category
  */
 export async function updateCategory(categoryId, updateData) {
   const category = await Category.findById(categoryId);
-  if (!category) throw new Error('Category not found');
+
+  if (!category) {
+    throw AppError.notFound('Category not found');
+  }
+
+  // Check for duplicate name
+  if (updateData.name) {
+    const existing = await Category.findOne({
+      name: { $regex: new RegExp(`^${updateData.name}$`, 'i') },
+      _id: { $ne: categoryId },
+    });
+
+    if (existing) {
+      throw AppError.conflict('Category name already exists');
+    }
+  }
 
   Object.assign(category, updateData);
   await category.save();
 
+  logger.info(`Category updated: ${category.name}`);
+
   return category;
 }
 
 /**
- * Delete category
+ * Deletes a category
  */
 export async function deleteCategory(categoryId) {
-  const category = await Category.findByIdAndDelete(categoryId);
-  if (!category) throw new Error('Category not found or already deleted');
-  return category;
+  const category = await Category.findById(categoryId);
+
+  if (!category) {
+    throw AppError.notFound('Category not found');
+  }
+
+  // Check if category is used in posts
+  const postCount = await Post.countDocuments({ categories: categoryId });
+
+  if (postCount > 0) {
+    throw AppError.badRequest(
+      `Cannot delete category. It is used in ${postCount} post(s). Please remove it from posts first.`
+    );
+  }
+
+  await category.deleteOne();
+
+  logger.info(`Category deleted: ${category.name}`);
 }
+
+/**
+ * Recalculates post count for a category
+ */
+export async function recalculatePostCount(categoryId) {
+  const count = await Post.countDocuments({ 
+    categories: categoryId,
+    status: 'published',
+  });
+
+  await Category.findByIdAndUpdate(categoryId, { postCount: count });
+
+  logger.info(`Recalculated post count for category ${categoryId}: ${count}`);
+
+  return count;
+}
+
+export default {
+  createCategory,
+  getAllCategories,
+  getCategoryById,
+  updateCategory,
+  deleteCategory,
+  recalculatePostCount,
+};

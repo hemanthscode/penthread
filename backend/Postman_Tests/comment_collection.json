@@ -1,131 +1,953 @@
 {
   "info": {
-    "_postman_id": "comments-module-collection-2025",
-    "name": "BlogPlatform Comments Module",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Postman collection for BlogPlatform Comments endpoints, variable-driven and RBAC"
+    "name": "Blog Platform - Comments Module",
+    "description": "Complete comment testing with moderation workflow",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Create Comment on Post (User)",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{user_access_token}}" },
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "url": "{{base_url}}/comments/posts/{{latest_post_id}}/comments",
-        "body": {
-          "mode": "raw",
-          "raw": "{ \"content\": \"Great blog post! Learned a lot.\" }"
-        }
-      },
-      "event": [
+      "name": "Comment Creation",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Comment created', function () { pm.response.to.have.status(201); });",
-              "var comment = pm.response.json();",
-              "pm.environment.set('latest_comment_id', comment._id);",
-              "console.log('Saved latest comment id:', comment._id);"
-            ]
-          }
+          "name": "1. Create Comment on Post 1 (User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Comment created successfully', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.content).to.exist;",
+                  "});",
+                  "",
+                  "pm.test('Comment status is pending', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('pending');",
+                  "});",
+                  "",
+                  "pm.test('Save comment ID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('comment1Id', jsonData.data._id);",
+                  "});",
+                  "",
+                  "pm.test('Author populated', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.author.name).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Great article! Very informative and well-written. Thanks for sharing this comprehensive guide on Node.js.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}", "comments"]
+            },
+            "description": "User creates comment on published post"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Create Comment on Post 1 (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Save comment2 ID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('comment2Id', jsonData.data._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Excellent resource! I'll be sharing this with my development team.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}", "comments"]
+            },
+            "description": "Admin creates comment"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create Comment on Post 2 (User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Save comment3 ID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('comment3Id', jsonData.data._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Love these React best practices! The hooks examples are especially helpful.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post2Id}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post2Id}}", "comments"]
+            },
+            "description": "User comments on second post"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Create Spam Comment (For Rejection)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Save spam comment ID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('spamCommentId', jsonData.data._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"Buy cheap products now! Visit example.com for amazing deals!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}", "comments"]
+            },
+            "description": "Create spam comment for rejection testing"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Get Comments for Post (Public)",
-      "request": {
-        "method": "GET",
-        "url": "{{base_url}}/comments/posts/{{latest_post_id}}/comments"
-      },
-      "event": [
+      "name": "Comment Moderation - Author",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Fetched post comments', function () { pm.response.to.have.status(200); });",
-              "var comments = pm.response.json();",
-              "if (comments.length > 0) { pm.environment.set('latest_comment_id', comments[0]._id); }"
-            ]
-          }
+          "name": "5. Get Pending Comments (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns pending comments on my posts', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.data.length).to.be.at.least(3);",
+                  "});",
+                  "",
+                  "pm.test('All comments are pending', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    jsonData.data.forEach(comment => {",
+                  "        pm.expect(comment.status).to.eql('pending');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "pending"]
+            },
+            "description": "Author views pending comments on their posts"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Approve Comment (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Comment approved', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('approved');",
+                  "});",
+                  "",
+                  "pm.test('Message indicates approval', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('approved');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{comment1Id}}/moderate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "{{comment1Id}}", "moderate"]
+            },
+            "description": "Author approves comment on their post"
+          },
+          "response": []
+        },
+        {
+          "name": "7. Approve Comment 2 (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Comment approved', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('approved');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{comment2Id}}/moderate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "{{comment2Id}}", "moderate"]
+            },
+            "description": "Approve second comment"
+          },
+          "response": []
+        },
+        {
+          "name": "8. Reject Spam Comment (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Comment rejected', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('rejected');",
+                  "});",
+                  "",
+                  "pm.test('Message indicates rejection', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.message).to.include('rejected');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"reject\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{spamCommentId}}/moderate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "{{spamCommentId}}", "moderate"]
+            },
+            "description": "Author rejects spam comment"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Moderate Comment (Approve - Author)",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{author_access_token}}" },
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "url": "{{base_url}}/comments/comments/{{latest_comment_id}}/moderate",
-        "body": {
-          "mode": "raw",
-          "raw": "{ \"action\": \"approve\" }"
-        }
-      },
-      "event": [
+      "name": "Comment Moderation - Admin",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Comment approved', function () { pm.response.to.have.status(200); });",
-              "var comment = pm.response.json();",
-              "pm.expect(comment.status).to.eql('approved');"
-            ]
-          }
+          "name": "9. Get All Pending Comments (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns all pending comments', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Admin sees all posts comments', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    jsonData.data.forEach(comment => {",
+                  "        pm.expect(comment.status).to.eql('pending');",
+                  "        pm.expect(comment.post).to.exist;",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "pending"]
+            },
+            "description": "Admin views all pending comments (any post)"
+          },
+          "response": []
+        },
+        {
+          "name": "10. Approve Comment 3 (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Admin approved comment', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('approved');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{comment3Id}}/moderate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "{{comment3Id}}", "moderate"]
+            },
+            "description": "Admin approves comment"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Moderate Comment (Reject - Admin)",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{admin_access_token}}" },
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "url": "{{base_url}}/comments/comments/{{latest_comment_id}}/moderate",
-        "body": {
-          "mode": "raw",
-          "raw": "{ \"action\": \"reject\" }"
-        }
-      },
-      "event": [
+      "name": "Comment Retrieval",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Comment rejected', function () { pm.response.to.have.status(200); });",
-              "var comment = pm.response.json();",
-              "pm.expect(comment.status).to.eql('rejected');"
-            ]
-          }
+          "name": "11. Get Comments for Post 1 (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns approved comments only', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.data.length).to.be.at.least(2);",
+                  "});",
+                  "",
+                  "pm.test('All comments are approved', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    jsonData.data.forEach(comment => {",
+                  "        pm.expect(comment.status).to.eql('approved');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Rejected comments not visible', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const spamId = pm.environment.get('spamCommentId');",
+                  "    const hasSpam = jsonData.data.some(c => c._id === spamId);",
+                  "    pm.expect(hasSpam).to.be.false;",
+                  "});",
+                  "",
+                  "pm.test('Comments have author info', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    jsonData.data.forEach(comment => {",
+                  "        pm.expect(comment.author.name).to.exist;",
+                  "        pm.expect(comment.author.avatar).to.exist;",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Pagination metadata present', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.pagination).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}/comments?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}", "comments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Public retrieves approved comments (no auth)"
+          },
+          "response": []
+        },
+        {
+          "name": "12. Get Comments for Post 2 (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns approved comments', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.data.length).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post2Id}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post2Id}}", "comments"]
+            },
+            "description": "Get comments for second post"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Delete Comment (Admin)",
-      "request": {
-        "method": "DELETE",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{admin_access_token}}" }
-        ],
-        "url": "{{base_url}}/comments/comments/{{latest_comment_id}}"
-      },
-      "event": [
+      "name": "Comment Deletion",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Comment deleted', function () { pm.response.to.have.status(200); });"
-            ]
-          }
+          "name": "13. Create Comment for Deletion Test",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Save deletion test comment ID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('deleteCommentId', jsonData.data._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"This comment will be deleted for testing purposes.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}", "comments"]
+            },
+            "description": "Create comment for deletion testing"
+          },
+          "response": []
+        },
+        {
+          "name": "14. Delete Own Comment (User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Comment deleted successfully', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{deleteCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "{{deleteCommentId}}"]
+            },
+            "description": "User deletes their own comment"
+          },
+          "response": []
+        },
+        {
+          "name": "15. Delete Rejected Comment (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Rejected comment deleted', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{spamCommentId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "{{spamCommentId}}"]
+            },
+            "description": "Admin deletes rejected spam comment"
+          },
+          "response": []
         }
       ]
+    },
+    {
+      "name": "Error & Authorization Tests",
+      "item": [
+        {
+          "name": "16. Test - Comment Without Auth",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"This should fail\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}", "comments"]
+            },
+            "description": "Test commenting without authentication"
+          },
+          "response": []
+        },
+        {
+          "name": "17. Test - Moderate Other Author's Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{comment1Id}}/moderate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "{{comment1Id}}", "moderate"]
+            },
+            "description": "Test user trying to moderate comment on author's post"
+          },
+          "response": []
+        },
+        {
+          "name": "18. Test - Delete Other's Comment (Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{comment2Id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "{{comment2Id}}"]
+            },
+            "description": "Test user trying to delete admin's comment"
+          },
+          "response": []
+        },
+        {
+          "name": "19. Test - Empty Comment Content",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 or 422', function () {",
+                  "    pm.expect([400, 422]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test('Validation error returned', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}", "comments"]
+            },
+            "description": "Test empty comment validation"
+          },
+          "response": []
+        },
+        {
+          "name": "20. Test - Comment Too Long",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 or 422', function () {",
+                  "    pm.expect([400, 422]).to.include(pm.response.code);",
+                  "});",
+                  "",
+                  "pm.test('Validation error for length', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "// Generate 1001 character string",
+                  "const longContent = 'a'.repeat(1001);",
+                  "pm.environment.set('longComment', longContent);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"{{longComment}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}", "comments"]
+            },
+            "description": "Test comment exceeding 1000 character limit"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
     }
   ]
 }

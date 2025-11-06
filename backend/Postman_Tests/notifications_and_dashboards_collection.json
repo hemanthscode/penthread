@@ -1,0 +1,811 @@
+{
+  "info": {
+    "name": "Blog Platform - Notifications & Dashboard",
+    "description": "Complete notifications and dashboard analytics testing",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Notifications",
+      "item": [
+        {
+          "name": "1. Get User Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns notifications array', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Pagination metadata present', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.pagination).to.exist;",
+                  "});",
+                  "",
+                  "pm.test('Save first notification ID if exists', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.data.length > 0) {",
+                  "        pm.environment.set('notificationId', jsonData.data[0]._id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get all notifications for logged-in user"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Get Unread Notifications Only",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('All notifications are unread', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    jsonData.data.forEach(notification => {",
+                  "        pm.expect(notification.isRead).to.be.false;",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?unreadOnly=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications"],
+              "query": [
+                {
+                  "key": "unreadOnly",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Filter to show only unread notifications"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Get Unread Count",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Count is a number', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.count).to.be.a('number');",
+                  "    pm.expect(jsonData.data.count).to.be.at.least(0);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/unread-count",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "unread-count"]
+            },
+            "description": "Get count of unread notifications (for badge)"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Mark Single Notification as Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Notification marked as read', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.isRead).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{notificationId}}", "read"]
+            },
+            "description": "Mark specific notification as read"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Mark All as Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns count of marked notifications', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.count).to.exist;",
+                  "    pm.expect(jsonData.data.count).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/read-all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "read-all"]
+            },
+            "description": "Mark all notifications as read"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Delete Single Notification",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Notification deleted', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{notificationId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{notificationId}}"]
+            },
+            "description": "Delete specific notification"
+          },
+          "response": []
+        },
+        {
+          "name": "7. Delete All Read Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns deletion count', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.count).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "read"]
+            },
+            "description": "Bulk delete all read notifications"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Activity",
+      "item": [
+        {
+          "name": "8. Get User Activities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns activities array', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Activities have action and details', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.data.length > 0) {",
+                  "        jsonData.data.forEach(activity => {",
+                  "            pm.expect(activity.action).to.exist;",
+                  "            pm.expect(activity.createdAt).to.exist;",
+                  "        });",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            },
+            "description": "Get user's activity timeline"
+          },
+          "response": []
+        },
+        {
+          "name": "9. Get Recent Activities",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns limited activities', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.data.length).to.be.at.most(10);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity/recent?limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity", "recent"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get recent activities (for dashboard widget)"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard - Admin",
+      "item": [
+        {
+          "name": "10. Get Admin Summary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Summary has all counts', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.totalUsers).to.exist;",
+                  "    pm.expect(jsonData.data.totalPosts).to.exist;",
+                  "    pm.expect(jsonData.data.totalComments).to.exist;",
+                  "    pm.expect(jsonData.data.pendingPosts).to.exist;",
+                  "    pm.expect(jsonData.data.pendingComments).to.exist;",
+                  "});",
+                  "",
+                  "pm.test('All counts are numbers', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.totalUsers).to.be.a('number');",
+                  "    pm.expect(jsonData.data.totalPosts).to.be.a('number');",
+                  "    pm.expect(jsonData.data.totalComments).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/admin/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "admin", "summary"]
+            },
+            "description": "Admin dashboard summary with key metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "11. Get Admin Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Statistics have breakdowns', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.postsByStatus).to.be.an('array');",
+                  "    pm.expect(jsonData.data.usersByRole).to.be.an('array');",
+                  "    pm.expect(jsonData.data.topAuthors).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Recent registrations count exists', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.recentRegistrations).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/admin/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "admin", "stats"]
+            },
+            "description": "Detailed admin statistics with charts data"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard - Author",
+      "item": [
+        {
+          "name": "12. Get Author Summary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Summary has author metrics', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.totalPosts).to.exist;",
+                  "    pm.expect(jsonData.data.publishedPosts).to.exist;",
+                  "    pm.expect(jsonData.data.draftPosts).to.exist;",
+                  "    pm.expect(jsonData.data.pendingPosts).to.exist;",
+                  "    pm.expect(jsonData.data.totalViews).to.exist;",
+                  "    pm.expect(jsonData.data.totalLikes).to.exist;",
+                  "    pm.expect(jsonData.data.totalComments).to.exist;",
+                  "});",
+                  "",
+                  "pm.test('All metrics are numbers', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    Object.values(jsonData.data).forEach(value => {",
+                  "        pm.expect(value).to.be.a('number');",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/author/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "author", "summary"]
+            },
+            "description": "Author dashboard summary with post performance"
+          },
+          "response": []
+        },
+        {
+          "name": "13. Get Author Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Statistics include posts by month', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.postsByMonth).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Top posts array exists', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.topPosts).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Recent comments array exists', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.recentComments).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/author/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "author", "stats"]
+            },
+            "description": "Detailed author statistics with trends"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Dashboard - User",
+      "item": [
+        {
+          "name": "14. Get User Summary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Summary has user metrics', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.favoritedPostsCount).to.exist;",
+                  "    pm.expect(jsonData.data.likedPostsCount).to.exist;",
+                  "    pm.expect(jsonData.data.commentsMade).to.exist;",
+                  "});",
+                  "",
+                  "pm.test('All counts are numbers', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.favoritedPostsCount).to.be.a('number');",
+                  "    pm.expect(jsonData.data.likedPostsCount).to.be.a('number');",
+                  "    pm.expect(jsonData.data.commentsMade).to.be.a('number');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/user/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "user", "summary"]
+            },
+            "description": "User dashboard summary with engagement metrics"
+          },
+          "response": []
+        },
+        {
+          "name": "15. Get User Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Statistics include interactions', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.recentInteractions).to.be.an('array');",
+                  "});",
+                  "",
+                  "pm.test('Recent comments array exists', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.recentComments).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/user/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "user", "stats"]
+            },
+            "description": "Detailed user activity statistics"
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Authorization Tests",
+      "item": [
+        {
+          "name": "16. Test - User Access to Admin Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});",
+                  "",
+                  "pm.test('Access denied message', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/admin/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "admin", "summary"]
+            },
+            "description": "Test user trying to access admin dashboard"
+          },
+          "response": []
+        },
+        {
+          "name": "17. Test - User Access to Author Dashboard",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/author/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "author", "summary"]
+            },
+            "description": "Test user trying to access author dashboard"
+          },
+          "response": []
+        },
+        {
+          "name": "18. Test - Notifications Without Auth",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications"]
+            },
+            "description": "Test accessing notifications without authentication"
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    }
+  ]
+}

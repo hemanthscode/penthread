@@ -1,188 +1,1371 @@
 {
   "info": {
-    "_postman_id": "posts-module-collection-2025",
-    "name": "BlogPlatform Posts Module",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Postman collection for BlogPlatform Posts API endpoints with variable mapping and RBAC"
+    "name": "Blog Platform - Posts Module",
+    "description": "Complete post lifecycle testing with status workflow and interactions",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Create Post (Author)",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{author_access_token}}" }
-        ],
-        "url": "{{base_url}}/posts",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"title\": \"Testing Post Title\",\n  \"content\": \"Sample post content for backend testing.\",\n  \"categories\": [\"{{category_id}}\"],\n  \"tags\": [\"{{tag_id}}\"]\n}"
-        }
-      },
-      "event": [
+      "name": "Post Creation & Management",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Post created', function () { pm.response.to.have.status(201); });",
-              "var jsonData = pm.response.json();",
-              "pm.environment.set('latest_post_id', jsonData._id);",
-              "console.log('Latest post ID set for further tests');"
-            ]
-          }
+          "name": "1. Create Post - Draft (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Post created successfully', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "    pm.expect(jsonData.data.title).to.eql('Getting Started with Node.js');",
+                  "});",
+                  "",
+                  "pm.test('Post status is draft', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('draft');",
+                  "});",
+                  "",
+                  "pm.test('Save post ID and slug', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('post1Id', jsonData.data._id);",
+                  "    pm.environment.set('post1Slug', jsonData.data.slug);",
+                  "});",
+                  "",
+                  "pm.test('Slug auto-generated', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.slug).to.exist;",
+                  "    pm.expect(jsonData.data.slug).to.include('getting-started');",
+                  "});",
+                  "",
+                  "pm.test('Categories and tags attached', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.categories).to.be.an('array');",
+                  "    pm.expect(jsonData.data.tags).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Getting Started with Node.js\",\n  \"content\": \"Node.js is a powerful JavaScript runtime built on Chrome's V8 engine. In this comprehensive guide, we'll explore how to set up your development environment, understand the event loop, and build your first Node.js application. We'll cover modules, npm packages, and best practices for building scalable applications. Node.js allows you to run JavaScript on the server side, opening up a world of possibilities for full-stack JavaScript development.\",\n  \"excerpt\": \"Learn the fundamentals of Node.js and build your first server-side application\",\n  \"categories\": [\"{{categoryTechId}}\"],\n  \"tags\": [\"{{tagNodeId}}\", \"{{tagJsId}}\"],\n  \"featuredImage\": \"https://example.com/nodejs-intro.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts"]
+            },
+            "description": "Create draft post as author"
+          },
+          "response": []
+        },
+        {
+          "name": "2. Create Post 2 - Draft (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Save post2 ID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('post2Id', jsonData.data._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"React Best Practices in 2025\",\n  \"content\": \"React continues to evolve with new patterns and best practices. This article covers the latest recommendations including hooks, context API, error boundaries, and performance optimization techniques. We'll also discuss state management solutions and when to use them. Learn how to structure your React applications for maximum maintainability and scalability. Discover the latest patterns for component composition and data fetching.\",\n  \"categories\": [\"{{categoryTechId}}\"],\n  \"tags\": [\"{{tagReactId}}\", \"{{tagJsId}}\"],\n  \"featuredImage\": \"https://example.com/react-2025.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts"]
+            },
+            "description": "Create second post"
+          },
+          "response": []
+        },
+        {
+          "name": "3. Create Post 3 - Lifestyle (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Save post3 ID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('post3Id', jsonData.data._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"10 Productivity Tips for Remote Workers\",\n  \"content\": \"Working remotely comes with unique challenges and opportunities. In this guide, we'll explore ten proven strategies to boost your productivity while working from home. From creating a dedicated workspace to establishing routines, these tips will help you maintain focus and work-life balance. Learn how successful remote workers structure their day and maximize efficiency.\",\n  \"categories\": [\"{{categoryLifestyleId}}\"],\n  \"tags\": [],\n  \"featuredImage\": \"\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts"]
+            },
+            "description": "Create lifestyle post"
+          },
+          "response": []
+        },
+        {
+          "name": "4. Get My Posts (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns my posts only', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.data.length).to.be.at.least(3);",
+                  "});",
+                  "",
+                  "pm.test('All posts belong to author', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const authorId = pm.environment.get('authorUserId');",
+                  "    jsonData.data.forEach(post => {",
+                  "        pm.expect(post.author._id).to.eql(authorId);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/my-posts?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "my-posts"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Get author's own posts (all statuses)"
+          },
+          "response": []
+        },
+        {
+          "name": "5. Update Post - Edit Content",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Content updated', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.content).to.include('UPDATED');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"UPDATED: Node.js is a powerful JavaScript runtime built on Chrome's V8 engine. In this comprehensive guide, we'll explore how to set up your development environment, understand the event loop, and build your first Node.js application. We'll cover modules, npm packages, and best practices for building scalable applications. Node.js allows you to run JavaScript on the server side.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}"]
+            },
+            "description": "Update post content"
+          },
+          "response": []
+        },
+        {
+          "name": "6. Get Single Post by ID (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post details returned', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.title).to.exist;",
+                  "    pm.expect(jsonData.data.author).to.exist;",
+                  "    pm.expect(jsonData.data.categories).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}"]
+            },
+            "description": "Get post details with populated relationships"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Get All Posts (Public)",
-      "request": {
-        "method": "GET",
-        "url": "{{base_url}}/posts"
-      },
-      "event": [
+      "name": "Post Status Workflow",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Posts fetched', function () { pm.response.to.have.status(200); });",
-              "var posts = pm.response.json();",
-              "if (posts.length > 0) { pm.environment.set('latest_post_id', posts[0]._id); }"
-            ]
-          }
+          "name": "7. Publish Post (Author - Should Succeed)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post published successfully', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('published');",
+                  "});",
+                  "",
+                  "pm.test('PublishedAt date set', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.publishedAt).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}", "publish"]
+            },
+            "description": "Author publishes their own post"
+          },
+          "response": []
+        },
+        {
+          "name": "8. Unpublish Post (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post unpublished', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('unpublished');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}/unpublish",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}", "unpublish"]
+            },
+            "description": "Author unpublishes post"
+          },
+          "response": []
+        },
+        {
+          "name": "9. Publish Again (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post published again', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('published');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}", "publish"]
+            },
+            "description": "Re-publish post"
+          },
+          "response": []
+        },
+        {
+          "name": "10. Publish Post 2 (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post 2 published', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('published');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post2Id}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post2Id}}", "publish"]
+            },
+            "description": "Publish second post"
+          },
+          "response": []
+        },
+        {
+          "name": "11. Approve Post 3 (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post approved', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('approved');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post3Id}}/approve",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post3Id}}", "approve"]
+            },
+            "description": "Admin approves post"
+          },
+          "response": []
+        },
+        {
+          "name": "12. Publish Approved Post (Author)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Approved post now published', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('published');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post3Id}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post3Id}}", "publish"]
+            },
+            "description": "Publish approved post"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Get Post by ID (Public)",
-      "request": {
-        "method": "GET",
-        "url": "{{base_url}}/posts/{{latest_post_id}}"
-      },
-      "event": [
+      "name": "Public Post Retrieval",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Single post fetched', function () { pm.response.to.have.status(200); });"
-            ]
-          }
+          "name": "13. Get Public Posts (No Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns published posts only', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    jsonData.data.forEach(post => {",
+                  "        pm.expect(post.status).to.eql('published');",
+                  "    });",
+                  "});",
+                  "",
+                  "pm.test('Pagination metadata present', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.pagination).to.exist;",
+                  "    pm.expect(jsonData.pagination.currentPage).to.exist;",
+                  "    pm.expect(jsonData.pagination.totalPages).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/public?page=1&limit=10",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "public"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            },
+            "description": "Public can view published posts"
+          },
+          "response": []
+        },
+        {
+          "name": "14. Get Public Posts - Filter by Category",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns filtered posts', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const categoryId = pm.environment.get('categoryTechId');",
+                  "    jsonData.data.forEach(post => {",
+                  "        const categoryIds = post.categories.map(c => c._id);",
+                  "        pm.expect(categoryIds).to.include(categoryId);",
+                  "    });",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/public?categoryId={{categoryTechId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "public"],
+              "query": [
+                {
+                  "key": "categoryId",
+                  "value": "{{categoryTechId}}"
+                }
+              ]
+            },
+            "description": "Filter posts by Technology category"
+          },
+          "response": []
+        },
+        {
+          "name": "15. Get Public Posts - Filter by Tag",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns posts with tag', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/public?tagId={{tagReactId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "public"],
+              "query": [
+                {
+                  "key": "tagId",
+                  "value": "{{tagReactId}}"
+                }
+              ]
+            },
+            "description": "Filter posts by React tag"
+          },
+          "response": []
+        },
+        {
+          "name": "16. Get Public Posts - Sort by Views",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Posts returned', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/public?sortBy=viewsCount&order=desc",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "public"],
+              "query": [
+                {
+                  "key": "sortBy",
+                  "value": "viewsCount"
+                },
+                {
+                  "key": "order",
+                  "value": "desc"
+                }
+              ]
+            },
+            "description": "Sort posts by views (most viewed first)"
+          },
+          "response": []
+        },
+        {
+          "name": "17. Get Single Public Post (No Auth)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post details complete', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.title).to.exist;",
+                  "    pm.expect(jsonData.data.content).to.exist;",
+                  "    pm.expect(jsonData.data.author.name).to.exist;",
+                  "    pm.expect(jsonData.data.commentsCount).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}"]
+            },
+            "description": "Public can view single published post"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Update Post (Author)",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{author_access_token}}" }
-        ],
-        "url": "{{base_url}}/posts/{{latest_post_id}}",
-        "body": {
-          "mode": "raw",
-          "raw": "{ \"title\": \"Updated Post Title\", \"content\": \"Updated post content.\" }"
-        }
-      },
-      "event": [
+      "name": "Post Interactions",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Post updated', function () { pm.response.to.have.status(200); });",
-              "var post = pm.response.json();",
-              "pm.expect(post.title).to.eql('Updated Post Title');"
-            ]
-          }
+          "name": "18. Like Post (User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post liked', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.liked).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/{{post1Id}}/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "{{post1Id}}", "like"]
+            },
+            "description": "User likes post"
+          },
+          "response": []
+        },
+        {
+          "name": "19. Unlike Post (Toggle)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post unliked', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.liked).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/{{post1Id}}/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "{{post1Id}}", "like"]
+            },
+            "description": "User unlikes post (toggle)"
+          },
+          "response": []
+        },
+        {
+          "name": "20. Like Again",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post liked again', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.liked).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/{{post1Id}}/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "{{post1Id}}", "like"]
+            },
+            "description": "Like post again"
+          },
+          "response": []
+        },
+        {
+          "name": "21. Favorite Post (User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post favorited', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.favorited).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/{{post1Id}}/favorite",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "{{post1Id}}", "favorite"]
+            },
+            "description": "User favorites post"
+          },
+          "response": []
+        },
+        {
+          "name": "22. Like Post 2 (User)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/{{post2Id}}/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "{{post2Id}}", "like"]
+            },
+            "description": "Like second post"
+          },
+          "response": []
+        },
+        {
+          "name": "23. Record View (Public)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('View count incremented', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.viewsCount).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/{{post1Id}}/view",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "{{post1Id}}", "view"]
+            },
+            "description": "Record view (no auth required)"
+          },
+          "response": []
+        },
+        {
+          "name": "24. Get User's Liked Posts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns liked posts', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.data.length).to.be.at.least(2);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/liked",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "liked"]
+            },
+            "description": "Get user's liked posts"
+          },
+          "response": []
+        },
+        {
+          "name": "25. Get User's Favorited Posts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns favorited posts', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "    pm.expect(jsonData.data.length).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/favorited",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "favorited"]
+            },
+            "description": "Get user's favorited posts"
+          },
+          "response": []
+        },
+        {
+          "name": "26. Get Post Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Stats include counts', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.likesCount).to.exist;",
+                  "    pm.expect(jsonData.data.favoritesCount).to.exist;",
+                  "    pm.expect(jsonData.data.viewsCount).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/{{post1Id}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "{{post1Id}}", "stats"]
+            },
+            "description": "Get post interaction statistics"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Approve Post (Admin)",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{admin_access_token}}" }
-        ],
-        "url": "{{base_url}}/posts/{{latest_post_id}}/approve"
-      },
-      "event": [
+      "name": "Admin Operations",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Post approved', function () { pm.response.to.have.status(200); });",
-              "var post = pm.response.json();",
-              "pm.expect(post.status).to.eql('approved');"
-            ]
-          }
+          "name": "27. Get All Posts (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Returns all posts regardless of status', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/admin/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "admin", "all"]
+            },
+            "description": "Admin views all posts (all statuses)"
+          },
+          "response": []
+        },
+        {
+          "name": "28. Create Rejection Test Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 201', function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test('Save rejection test post ID', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('rejectTestPostId', jsonData.data._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Post for Rejection\",\n  \"content\": \"This post will be rejected by admin for testing purposes. It contains test content that does not meet quality standards.\",\n  \"categories\": [\"{{categoryTechId}}\"],\n  \"tags\": []\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts"]
+            },
+            "description": "Create post to test rejection workflow"
+          },
+          "response": []
+        },
+        {
+          "name": "29. Reject Post (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post rejected', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('rejected');",
+                  "    pm.expect(jsonData.data.rejectionReason).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"Content does not meet quality standards. Please revise and resubmit.\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{rejectTestPostId}}/reject",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{rejectTestPostId}}", "reject"]
+            },
+            "description": "Admin rejects post with reason"
+          },
+          "response": []
+        },
+        {
+          "name": "30. Delete Post (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test('Post deleted', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{rejectTestPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{rejectTestPostId}}"]
+            },
+            "description": "Admin deletes rejected post"
+          },
+          "response": []
         }
       ]
     },
     {
-      "name": "Publish Post (Author)",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{author_access_token}}" }
-        ],
-        "url": "{{base_url}}/posts/{{latest_post_id}}/publish"
-      },
-      "event": [
+      "name": "Error & Authorization Tests",
+      "item": [
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Post published', function () { pm.response.to.have.status(200); });",
-              "var post = pm.response.json();",
-              "pm.expect(post.status).to.eql('published');"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Unpublish Post (Author)",
-      "request": {
-        "method": "PATCH",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{author_access_token}}" }
-        ],
-        "url": "{{base_url}}/posts/{{latest_post_id}}/unpublish"
-      },
-      "event": [
+          "name": "31. Test - Create Post Without Auth",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 401 Unauthorized', function () {",
+                  "    pm.response.to.have.status(401);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Test Post\",\n  \"content\": \"This should fail\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts"]
+            },
+            "description": "Test creating post without authentication"
+          },
+          "response": []
+        },
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Post unpublished', function () { pm.response.to.have.status(200); });",
-              "var post = pm.response.json();",
-              "pm.expect(post.status).to.eql('unpublished');"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Delete Post (Author)",
-      "request": {
-        "method": "DELETE",
-        "header": [
-          { "key": "Authorization", "value": "Bearer {{author_access_token}}" }
-        ],
-        "url": "{{base_url}}/posts/{{latest_post_id}}"
-      },
-      "event": [
+          "name": "32. Test - Update Other's Post (Forbidden)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 403 Forbidden', function () {",
+                  "    pm.response.to.have.status(403);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Hacked Title\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{post1Id}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{post1Id}}"]
+            },
+            "description": "Test user trying to update author's post"
+          },
+          "response": []
+        },
         {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Post deleted', function () { pm.response.to.have.status(200); });"
-            ]
-          }
+          "name": "33. Test - Invalid Post ID",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 400 or 404', function () {",
+                  "    pm.expect([400, 404]).to.include(pm.response.code);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/invalid-id-123",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "invalid-id-123"]
+            },
+            "description": "Test invalid post ID"
+          },
+          "response": []
         }
       ]
     }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    }
   ]
 }
-    

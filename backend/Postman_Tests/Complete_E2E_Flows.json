@@ -1,0 +1,1194 @@
+{
+  "info": {
+    "name": "Blog Platform - Complete E2E Flows",
+    "description": "End-to-end workflow testing from User, Author, and Admin perspectives with data verification",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "FLOW 1: Complete Author Journey",
+      "item": [
+        {
+          "name": "1.1 Author - Create Draft Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Post created as draft', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('draft');",
+                  "    pm.environment.set('flowPostId', jsonData.data._id);",
+                  "});",
+                  "",
+                  "pm.test('Post has author reference', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.author._id).to.eql(pm.environment.get('authorUserId'));",
+                  "});",
+                  "",
+                  "pm.test('Categories and tags attached', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.categories.length).to.be.at.least(1);",
+                  "    pm.expect(jsonData.data.tags.length).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Complete E2E Test: Advanced MongoDB Aggregation Pipeline\",\n  \"content\": \"MongoDB aggregation pipeline is a powerful framework for data processing and analysis. In this comprehensive tutorial, we'll explore advanced aggregation techniques, including lookup operations, grouping, sorting, and complex filtering. You'll learn how to build efficient data processing pipelines that can handle millions of documents with ease. We'll cover real-world use cases and performance optimization strategies.\",\n  \"excerpt\": \"Master MongoDB aggregation pipeline with advanced techniques and real-world examples\",\n  \"categories\": [\"{{categoryTechId}}\"],\n  \"tags\": [\"{{tagMongoId}}\", \"{{tagNodeId}}\"],\n  \"featuredImage\": \"https://example.com/mongodb-advanced.jpg\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.2 Author - Verify Draft in My Posts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Draft post appears in my posts', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const flowPostId = pm.environment.get('flowPostId');",
+                  "    const hasDraft = jsonData.data.some(p => p._id === flowPostId && p.status === 'draft');",
+                  "    pm.expect(hasDraft).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/my-posts?status=draft",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "my-posts"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "draft"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.3 Author - Verify Draft NOT in Public",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Draft post NOT visible in public', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const flowPostId = pm.environment.get('flowPostId');",
+                  "    const hasDraft = jsonData.data.some(p => p._id === flowPostId);",
+                  "    pm.expect(hasDraft).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "public"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.4 Author - Publish Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Post published successfully', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('published');",
+                  "    pm.expect(jsonData.data.publishedAt).to.exist;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{flowPostId}}/publish",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{flowPostId}}", "publish"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.5 Author - Verify Published in Public",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Published post NOW visible in public', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const flowPostId = pm.environment.get('flowPostId');",
+                  "    const hasPublished = jsonData.data.some(p => p._id === flowPostId && p.status === 'published');",
+                  "    pm.expect(hasPublished).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "public"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.6 Author - Check Dashboard Updates",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Published posts count increased', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.publishedPosts).to.be.at.least(1);",
+                  "});",
+                  "",
+                  "pm.test('Total posts count updated', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.totalPosts).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/author/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "author", "summary"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "1.7 Author - Check Activity Log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Post creation activity logged', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const hasPostCreated = jsonData.data.some(a => a.action === 'POST_CREATED');",
+                  "    pm.expect(hasPostCreated).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity/recent?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity", "recent"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "FLOW 2: Complete User Engagement Journey",
+      "item": [
+        {
+          "name": "2.1 User - Discover Post in Public Feed",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Post visible to user', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const flowPostId = pm.environment.get('flowPostId');",
+                  "    const hasPost = jsonData.data.some(p => p._id === flowPostId);",
+                  "    pm.expect(hasPost).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/public",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "public"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.2 User - View Post Details",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Post details loaded', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.title).to.exist;",
+                  "    pm.expect(jsonData.data.content).to.exist;",
+                  "    pm.expect(jsonData.data.author.name).to.exist;",
+                  "});",
+                  "",
+                  "pm.test('User interactions initially false', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.userInteractions.liked).to.be.false;",
+                  "    pm.expect(jsonData.data.userInteractions.favorited).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{flowPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{flowPostId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.3 User - Record View",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('View recorded', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.viewsCount).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/{{flowPostId}}/view",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "{{flowPostId}}", "view"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.4 User - Like Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Post liked', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.liked).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/{{flowPostId}}/like",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "{{flowPostId}}", "like"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.5 User - Favorite Post",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Post favorited', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.favorited).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/{{flowPostId}}/favorite",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "{{flowPostId}}", "favorite"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.6 User - Create Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Comment created as pending', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('pending');",
+                  "    pm.environment.set('flowCommentId', jsonData.data._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"content\": \"This is an excellent deep dive into MongoDB aggregation! The examples are very clear and practical. Thanks for sharing!\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{flowPostId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{flowPostId}}", "comments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.7 User - Verify Comment NOT Public Yet",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Pending comment NOT visible publicly', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const flowCommentId = pm.environment.get('flowCommentId');",
+                  "    const hasComment = jsonData.data.some(c => c._id === flowCommentId);",
+                  "    pm.expect(hasComment).to.be.false;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{flowPostId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{flowPostId}}", "comments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.8 User - Verify Post in Liked List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Liked post appears in user liked list', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const flowPostId = pm.environment.get('flowPostId');",
+                  "    const hasLiked = jsonData.data.some(p => p._id === flowPostId);",
+                  "    pm.expect(hasLiked).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/liked",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "liked"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.9 User - Verify Post in Favorited List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Favorited post appears in user favorites', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const flowPostId = pm.environment.get('flowPostId');",
+                  "    const hasFavorited = jsonData.data.some(p => p._id === flowPostId);",
+                  "    pm.expect(hasFavorited).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/favorited",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "favorited"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "2.10 User - Check Dashboard Updates",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User engagement metrics updated', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.likedPostsCount).to.be.at.least(1);",
+                  "    pm.expect(jsonData.data.favoritedPostsCount).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/user/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "user", "summary"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "FLOW 3: Author Comment Moderation",
+      "item": [
+        {
+          "name": "3.1 Author - Check Pending Comments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Pending comment appears for author', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const flowCommentId = pm.environment.get('flowCommentId');",
+                  "    const hasComment = jsonData.data.some(c => c._id === flowCommentId && c.status === 'pending');",
+                  "    pm.expect(hasComment).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "pending"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.2 Author - Approve Comment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Comment approved', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.status).to.eql('approved');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"approve\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/{{flowCommentId}}/moderate",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "{{flowCommentId}}", "moderate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.3 Author - Verify Comment NOW Public",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Approved comment NOW visible publicly', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const flowCommentId = pm.environment.get('flowCommentId');",
+                  "    const hasComment = jsonData.data.some(c => c._id === flowCommentId && c.status === 'approved');",
+                  "    pm.expect(hasComment).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{flowPostId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{flowPostId}}", "comments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "3.4 Author - Check Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Author received comment notification', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const hasNotification = jsonData.data.some(n => n.message.includes('commented'));",
+                  "    pm.expect(hasNotification).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?unreadOnly=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications"],
+              "query": [
+                {
+                  "key": "unreadOnly",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "FLOW 4: User Notification & Activity",
+      "item": [
+        {
+          "name": "4.1 User - Check Notifications",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User received comment approval notification', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const hasNotification = jsonData.data.some(n => n.message.includes('approved'));",
+                  "    pm.expect(hasNotification).to.be.true;",
+                  "    ",
+                  "    if (jsonData.data.length > 0) {",
+                  "        pm.environment.set('userNotificationId', jsonData.data[0]._id);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications?unreadOnly=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications"],
+              "query": [
+                {
+                  "key": "unreadOnly",
+                  "value": "true"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.2 User - Mark Notification as Read",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Notification marked as read', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.isRead).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/notifications/{{userNotificationId}}/read",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "notifications", "{{userNotificationId}}", "read"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "4.3 User - Check Activity Log",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Comment creation activity logged', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const hasActivity = jsonData.data.some(a => a.action === 'COMMENT_CREATED');",
+                  "    pm.expect(hasActivity).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/activity/recent?limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "activity", "recent"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "FLOW 5: Admin Platform Monitoring",
+      "item": [
+        {
+          "name": "5.1 Admin - View All Posts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Admin sees all posts regardless of status', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const flowPostId = pm.environment.get('flowPostId');",
+                  "    const hasPost = jsonData.data.some(p => p._id === flowPostId);",
+                  "    pm.expect(hasPost).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/admin/all",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "admin", "all"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.2 Admin - View All Pending Comments",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Admin sees all pending comments', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/comments/pending",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "comments", "pending"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.3 Admin - Check Dashboard Summary",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Dashboard reflects all activities', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.totalPosts).to.be.at.least(1);",
+                  "    pm.expect(jsonData.data.totalComments).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/admin/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "admin", "summary"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.4 Admin - Check Platform Statistics",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Statistics show post distribution', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.postsByStatus).to.be.an('array');",
+                  "    pm.expect(jsonData.data.usersByRole).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{adminAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/admin/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "admin", "stats"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "5.5 Admin - Verify Post Stats",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Post stats reflect interactions', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.likesCount).to.be.at.least(1);",
+                  "    pm.expect(jsonData.data.viewsCount).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/interactions/{{flowPostId}}/stats",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "interactions", "{{flowPostId}}", "stats"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "FLOW 6: Data Consistency Verification",
+      "item": [
+        {
+          "name": "6.1 Verify - Post Detail Has Correct Counts",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Post has correct interaction counts', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.likesCount).to.be.at.least(1);",
+                  "    pm.expect(jsonData.data.viewsCount).to.be.at.least(1);",
+                  "    pm.expect(jsonData.data.favoritesCount).to.be.at.least(1);",
+                  "    pm.expect(jsonData.data.commentsCount).to.be.at.least(1);",
+                  "});",
+                  "",
+                  "pm.test('User interactions correctly reflect', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.userInteractions.liked).to.be.true;",
+                  "    pm.expect(jsonData.data.userInteractions.favorited).to.be.true;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{flowPostId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{flowPostId}}"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.2 Verify - Author Dashboard Reflects Activity",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Author dashboard shows engagement', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.totalViews).to.be.at.least(1);",
+                  "    pm.expect(jsonData.data.totalLikes).to.be.at.least(1);",
+                  "    pm.expect(jsonData.data.totalComments).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{authorAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/author/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "author", "summary"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.3 Verify - User Dashboard Shows Engagement",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('User dashboard reflects all actions', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.likedPostsCount).to.be.at.least(1);",
+                  "    pm.expect(jsonData.data.favoritedPostsCount).to.be.at.least(1);",
+                  "    pm.expect(jsonData.data.commentsMade).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{userAccessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/dashboard/user/summary",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "dashboard", "user", "summary"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "6.4 Verify - Comment Count Matches Approved",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Comment count matches approved comments', function () {",
+                  "    const jsonData = pm.response.json();",
+                  "    const approvedCount = jsonData.data.length;",
+                  "    pm.expect(approvedCount).to.be.at.least(1);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/posts/{{flowPostId}}/comments",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "posts", "{{flowPostId}}", "comments"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
+    }
+  ]
+}

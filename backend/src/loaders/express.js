@@ -1,43 +1,79 @@
+/**
+ * Express Application Loader
+ * 
+ * Configures Express app with all middleware and error handling.
+ * 
+ * @module loaders/express
+ */
+
 import express from 'express';
 import helmet from 'helmet';
-import morgan from 'morgan';
 import cors from 'cors';
 import { corsOptions, apiRateLimiter } from '../config/appConfig.js';
 import routes from './routes.js';
+import errorMiddleware from '../middlewares/error.middleware.js';
+import requestLoggerMiddleware from '../middlewares/requestLogger.middleware.js';
+import sanitizeMiddleware from '../middlewares/sanitize.middleware.js';
 import logger from '../config/logger.js';
+import config from '../config/index.js';
 
-// Integrate Morgan HTTP logger with Winston
-const morganStream = {
-  write: (message) => logger.info(message.trim()),
-};
-
+/**
+ * Creates and configures Express application
+ * @returns {Object} Configured Express app
+ */
 export default function createExpressApp() {
   const app = express();
 
-  app.use(helmet());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  // Trust proxy (for rate limiting behind reverse proxy)
+  app.set('trust proxy', 1);
+
+  // Security middleware
+  app.use(helmet({
+    contentSecurityPolicy: false, // Disable for API
+    crossOriginEmbedderPolicy: false,
+  }));
+
+  // CORS
   app.use(cors(corsOptions));
+
+  // Body parsers
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+  // Request logging
+  app.use(requestLoggerMiddleware);
+
+  // Input sanitization
+  app.use(sanitizeMiddleware);
+
+  // Rate limiting
   app.use(apiRateLimiter);
 
-  app.use(morgan('combined', { stream: morganStream }));
-
-  // API routes under /api prefix
-  app.use('/api', routes);
-
-  // 404 handler for unknown API endpoints
-  app.use((req, res, next) => {
-    res.status(404).json({ message: 'API endpoint not found' });
-  });
-
-  // Global error handler middleware
-  app.use((err, req, res, next) => {
-    logger.error(err);
-    res.status(err.status || 500).json({
-      message: err.message || 'Internal Server Error',
-      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  // Health check endpoint
+  app.get('/health', (req, res) => {
+    res.status(200).json({
+      success: true,
+      message: 'Server is healthy',
+      timestamp: new Date().toISOString(),
+      environment: config.env,
     });
   });
+
+  // API routes
+  app.use('/api', routes);
+
+  // 404 handler
+  app.use((req, res) => {
+    res.status(404).json({
+      success: false,
+      message: `Cannot ${req.method} ${req.path}`,
+    });
+  });
+
+  // Global error handler
+  app.use(errorMiddleware);
+
+  logger.info('Express app configured successfully');
 
   return app;
 }

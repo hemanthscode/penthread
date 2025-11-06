@@ -1,87 +1,293 @@
+/**
+ * Dashboard Service
+ * 
+ * Provides analytics and statistics for different user roles.
+ * 
+ * @module modules/dashboard/service
+ */
+
 import Post from '../posts/post.model.js';
-import User from '../users/user.model.js';
+import User from '../auth/auth.model.js';
 import Comment from '../comments/comment.model.js';
 import Interaction from '../interactions/interaction.model.js';
+import { POST_STATUS, COMMENT_STATUS } from '../../utils/constants.js';
 
 /**
- * Admin summary: global counts of users, posts, comments
+ * Gets admin dashboard summary
  */
 export async function getAdminSummary() {
-  const totalUsers = await User.countDocuments();
-  const totalPosts = await Post.countDocuments();
-  const totalComments = await Comment.countDocuments();
-  return { totalUsers, totalPosts, totalComments };
+  const [totalUsers, totalPosts, totalComments, pendingPosts, pendingComments] = await Promise.all([
+    User.countDocuments(),
+    Post.countDocuments(),
+    Comment.countDocuments(),
+    Post.countDocuments({ status: POST_STATUS.PENDING }),
+    Comment.countDocuments({ status: COMMENT_STATUS.PENDING }),
+  ]);
+
+  return {
+    totalUsers,
+    totalPosts,
+    totalComments,
+    pendingPosts,
+    pendingComments,
+  };
 }
 
 /**
- * Admin stats: grouped posts by status and users by role
+ * Gets admin statistics with breakdowns
  */
 export async function getAdminStats() {
-  const postsPerStatus = await Post.aggregate([
-    { $group: { _id: '$status', count: { $sum: 1 } } },
+  // Posts by status
+  const postsByStatus = await Post.aggregate([
+    {
+      $group: {
+        _id: '$status',
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        status: '$_id',
+        count: 1,
+        _id: 0,
+      },
+    },
   ]);
-  const usersPerRole = await User.aggregate([
-    { $group: { _id: '$role', count: { $sum: 1 } } },
+
+  // Users by role
+  const usersByRole = await User.aggregate([
+    {
+      $group: {
+        _id: '$role',
+        count: { $sum: 1 },
+      },
+    },
+    {
+      $project: {
+        role: '$_id',
+        count: 1,
+        _id: 0,
+      },
+    },
   ]);
-  return { postsPerStatus, usersPerRole };
+
+  // Recent registrations (last 30 days)
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+  const recentRegistrations = await User.countDocuments({
+    createdAt: { $gte: thirtyDaysAgo },
+  });
+
+  // Top authors by post count
+  const topAuthors = await Post.aggregate([
+    { $match: { status: POST_STATUS.PUBLISHED } },
+    {
+      $group: {
+        _id: '$author',
+        postCount: { $sum: 1 },
+      },
+    },
+    { $sort: { postCount: -1 } },
+    { $limit: 5 },
+    {
+      $lookup: {
+        from: 'users',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'authorDetails',
+      },
+    },
+    { $unwind: '$authorDetails' },
+    {
+      $project: {
+        author: {
+          id: '$authorDetails._id',
+          name: '$authorDetails.name',
+          email: '$authorDetails.email',
+        },
+        postCount: 1,
+        _id: 0,
+      },
+    },
+  ]);
+
+  return {
+    postsByStatus,
+    usersByRole,
+    recentRegistrations,
+    topAuthors,
+  };
 }
 
 /**
- * Author summary: post counts & comments on their posts
+ * Gets author dashboard summary
  */
 export async function getAuthorSummary(userId) {
-  const totalPosts = await Post.countDocuments({ author: userId });
-  const publishedPosts = await Post.countDocuments({ author: userId, status: 'published' });
-  const totalComments = await Comment.countDocuments({ 'post.author': userId });
+  const [totalPosts, publishedPosts, draftPosts, pendingPosts] = await Promise.all([
+    Post.countDocuments({ author: userId }),
+    Post.countDocuments({ author: userId, status: POST_STATUS.PUBLISHED }),
+    Post.countDocuments({ author: userId, status: POST_STATUS.DRAFT }),
+    Post.countDocuments({ author: userId, status: POST_STATUS.PENDING }),
+  ]);
 
-  const totalLikes = await Interaction.aggregate([
-    { $match: { liked: true } },
-    {
-      $lookup: {
-        from: 'posts',
-        localField: 'post',
-        foreignField: '_id',
-        as: 'postDetails',
-      },
-    },
-    { $unwind: '$postDetails' },
-    { $match: { 'postDetails.author': userId } },
-    { $count: 'likesCount' },
+  // Get total views, likes, and comments on author's posts
+  const authorPosts = await Post.find({ author: userId }).select('_id');
+  const postIds = authorPosts.map(p => p._id);
+
+  const [totalViews, totalLikes, totalComments] = await Promise.all([
+    Post.aggregate([
+      { $match: { author: userId } },
+      { $group: { _id: null, total: { $sum: '$viewsCount' } } },
+    ]).then(result => result[0]?.total || 0),
+    
+    Interaction.countDocuments({ post: { $in: postIds }, liked: true }),
+    
+    Comment.countDocuments({ post: { $in: postIds }, status: COMMENT_STATUS.APPROVED }),
   ]);
 
   return {
     totalPosts,
     publishedPosts,
+    draftPosts,
+    pendingPosts,
+    totalViews,
+    totalLikes,
     totalComments,
-    totalLikes: totalLikes[0]?.likesCount || 0,
   };
 }
 
 /**
- * Author stats: daily posts counts to show trends
+ * Gets author statistics with trends
  */
 export async function getAuthorStats(userId) {
-  const postsByDate = await Post.aggregate([
-    { $match: { author: userId } },
+  // Posts by month (last 6 months)
+  const sixMonthsAgo = new Date();
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+  const postsByMonth = await Post.aggregate([
+    {
+      $match: {
+        author: userId,
+        createdAt: { $gte: sixMonthsAgo },
+      },
+    },
     {
       $group: {
-        _id: { $dateToString: { format: '%Y-%m-%d', date: '$createdAt' } },
+        _id: {
+          year: { $year: '$createdAt' },
+          month: { $month: '$createdAt' },
+        },
         count: { $sum: 1 },
       },
     },
-    { $sort: { _id: 1 } },
+    { $sort: { '_id.year': 1, '_id.month': 1 } },
+    {
+      $project: {
+        date: {
+          $concat: [
+            { $toString: '$_id.year' },
+            '-',
+            {
+              $cond: [
+                { $lt: ['$_id.month', 10] },
+                { $concat: ['0', { $toString: '$_id.month' }] },
+                { $toString: '$_id.month' },
+              ],
+            },
+          ],
+        },
+        count: 1,
+        _id: 0,
+      },
+    },
   ]);
-  return { postsByDate };
+
+  // Top performing posts
+  const topPosts = await Post.find({ author: userId, status: POST_STATUS.PUBLISHED })
+    .sort({ viewsCount: -1 })
+    .limit(5)
+    .select('title viewsCount likesCount commentsCount createdAt');
+
+  // Recent comments on author's posts
+  const authorPosts = await Post.find({ author: userId }).select('_id');
+  const postIds = authorPosts.map(p => p._id);
+
+  const recentComments = await Comment.find({
+    post: { $in: postIds },
+    status: COMMENT_STATUS.APPROVED,
+  })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .populate('author', 'name avatar')
+    .populate('post', 'title');
+
+  return {
+    postsByMonth,
+    topPosts,
+    recentComments,
+  };
 }
 
 /**
- * Basic user summary with enriched favorites and comments count
+ * Gets user dashboard summary
  */
 export async function getUserSummary(userId) {
-  const favoritePostsCount = await Interaction.countDocuments({ user: userId, favorited: true });
-  const commentsMade = await Comment.countDocuments({ author: userId });
+  const [favoritedPostsCount, likedPostsCount, commentsMade] = await Promise.all([
+    Interaction.countDocuments({ user: userId, favorited: true }),
+    Interaction.countDocuments({ user: userId, liked: true }),
+    Comment.countDocuments({ author: userId, status: COMMENT_STATUS.APPROVED }),
+  ]);
+
   return {
-    favoritePostsCount,
+    favoritedPostsCount,
+    likedPostsCount,
     commentsMade,
   };
 }
+
+/**
+ * Gets user activity stats
+ */
+export async function getUserStats(userId) {
+  // Recent interactions
+  const recentInteractions = await Interaction.find({
+    user: userId,
+    $or: [{ liked: true }, { favorited: true }],
+  })
+    .sort({ updatedAt: -1 })
+    .limit(5)
+    .populate({
+      path: 'post',
+      select: 'title author',
+      populate: { path: 'author', select: 'name' },
+    });
+
+  // Recent comments
+  const recentComments = await Comment.find({
+    author: userId,
+    status: COMMENT_STATUS.APPROVED,
+  })
+    .sort({ createdAt: -1 })
+    .limit(5)
+    .populate('post', 'title');
+
+  return {
+    recentInteractions: recentInteractions.map(i => ({
+      post: i.post,
+      liked: i.liked,
+      favorited: i.favorited,
+      updatedAt: i.updatedAt,
+    })),
+    recentComments,
+  };
+}
+
+export default {
+  getAdminSummary,
+  getAdminStats,
+  getAuthorSummary,
+  getAuthorStats,
+  getUserSummary,
+  getUserStats,
+};

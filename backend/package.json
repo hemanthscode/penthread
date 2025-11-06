@@ -1,37 +1,49 @@
 {
-  "name": "backend",
+  "name": "blog-platform-backend",
   "version": "1.0.0",
   "description": "Production-ready scalable blog platform backend",
   "main": "src/server.js",
-  "scripts": {
-    "start": "node --experimental-specifier-resolution=node src/server.js",
-    "dev": "nodemon --experimental-specifier-resolution=node src/server.js",
-    "db:clear": "node --experimental-specifier-resolution=node src/utils/dbManager.js clear",
-    "db:seed": "node --experimental-specifier-resolution=node src/utils/dbManager.js seed"
-  },
   "type": "module",
   "engines": {
     "node": ">=18"
   },
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "nodemon src/server.js",
+    "db:clear": "node src/scripts/dbManager.js clear",
+    "db:info": "node src/scripts/dbManager.js info",
+    "seed:admin": "node src/scripts/seedAdmin.js",
+    "seed:data": "node src/scripts/seedData.js",
+    "seed:all": "npm run seed:admin && npm run seed:data"
+  },
+  "keywords": [
+    "blog",
+    "cms",
+    "nodejs",
+    "express",
+    "mongodb",
+    "rest-api"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
   "dependencies": {
-    "@emailjs/browser": "^4.4.1",
     "bcryptjs": "^2.4.3",
-    "bull": "^4.0.2",
+    "bull": "^4.12.0",
     "cors": "^2.8.5",
-    "dotenv": "^16.0.3",
-    "emailjs-com": "^3.2.0",
+    "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "express-rate-limit": "^6.7.0",
-    "helmet": "^6.0.1",
-    "joi": "^17.9.2",
-    "jsonwebtoken": "^9.0.0",
-    "mongoose": "^7.1.0",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "joi": "^17.11.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.0.3",
     "morgan": "^1.10.0",
-    "node-cron": "^3.0.2",
-    "nodemailer": "^7.0.9",
-    "winston": "^3.8.2"
+    "node-cron": "^3.0.3",
+    "nodemailer": "^6.9.7",
+    "uuid": "^9.0.1",
+    "winston": "^3.11.0"
   },
   "devDependencies": {
-    "nodemon": "^2.0.22"
+    "nodemon": "^3.0.2"
   }
 }

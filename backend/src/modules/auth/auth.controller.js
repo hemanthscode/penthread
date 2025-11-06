@@ -1,97 +1,179 @@
-import * as authService from './auth.service.js';
-import { sendEmail } from '../../config/email.js';
-import User from './auth.model.js';
+/**
+ * Authentication Controller
+ * 
+ * Handles HTTP requests for authentication endpoints.
+ * 
+ * @module modules/auth/controller
+ */
 
+import * as authService from './auth.service.js';
+import { sendSuccess, sendError } from '../../utils/response.js';
+import AppError from '../../utils/AppError.js';
+
+/**
+ * Register new user
+ * POST /api/auth/register
+ */
 export async function register(req, res, next) {
   try {
     const user = await authService.registerUser(req.body);
-    res.status(201).json({ success: true, message: 'User registered successfully', userId: user._id });
-  } catch (err) {
-    next(err);
+    
+    sendSuccess(res, 
+      { 
+        userId: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      'User registered successfully',
+      201
+    );
+  } catch (error) {
+    next(error);
   }
 }
 
+/**
+ * Login user
+ * POST /api/auth/login
+ */
 export async function login(req, res, next) {
   try {
     const user = await authService.loginUser(req.body.email, req.body.password);
-    const tokens = await authService.createTokens(user);
-    res.json({ success: true, userId: user._id, role: user.role, tokens });
-  } catch (err) {
-    next(err);
+    const tokens = authService.createTokens(user);
+
+    sendSuccess(res, {
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      tokens,
+    }, 'Login successful');
+  } catch (error) {
+    next(error);
   }
 }
 
-export async function logout(req, res) {
-  // For stateless JWT, logout handled client-side by token discard or blacklisting (if implemented)
-  res.status(200).json({ success: true, message: 'Logged out successfully' });
+/**
+ * Logout user (client-side token removal)
+ * POST /api/auth/logout
+ */
+export async function logout(req, res, next) {
+  try {
+    // For JWT, logout is handled client-side by discarding tokens
+    // Could implement token blacklisting here if needed
+    sendSuccess(res, null, 'Logged out successfully');
+  } catch (error) {
+    next(error);
+  }
 }
 
+/**
+ * Refresh access token
+ * POST /api/auth/refresh
+ */
 export async function refreshToken(req, res, next) {
   try {
     const { refreshToken } = req.body;
+
+    if (!refreshToken) {
+      throw AppError.badRequest('Refresh token is required');
+    }
+
     const payload = await authService.verifyRefreshToken(refreshToken);
     const user = { _id: payload.id, role: payload.role };
-    const tokens = await authService.createTokens(user);
-    res.json({ success: true, tokens });
-  } catch (err) {
-    next(err);
+    const tokens = authService.createTokens(user);
+
+    sendSuccess(res, { tokens }, 'Token refreshed successfully');
+  } catch (error) {
+    next(error);
   }
 }
 
+/**
+ * Request password reset
+ * POST /api/auth/forgot-password
+ */
 export async function forgotPassword(req, res, next) {
   try {
     const { user, resetToken } = await authService.generatePasswordResetToken(req.body.email);
-    
-    // Email sending is a side effect; can be async but here await for assured delivery
-    // await sendEmail({
-    //   to_name: user.name,
-    //   to_email: user.email,
-    //   reset_link: `https://yourfrontend.com/reset-password?token=${resetToken}`,
-    // });
 
-    res.json({
-      success: true,
-      message: 'Password reset email sent. Please check your inbox.',
-      resetToken, 
-    });
-  } catch (err) {
-    next(err);
+    // In development, return token for testing
+    const data = process.env.NODE_ENV === 'development' 
+      ? { resetToken, message: 'Development mode: Token returned in response' }
+      : null;
+
+    sendSuccess(
+      res,
+      data,
+      'Password reset email sent. Please check your inbox.'
+    );
+  } catch (error) {
+    next(error);
   }
 }
 
+/**
+ * Reset password using token
+ * POST /api/auth/reset-password
+ */
 export async function resetPassword(req, res, next) {
   try {
     await authService.resetPassword(req.body.token, req.body.password);
-    res.json({ success: true, message: 'Password reset successful' });
-  } catch (err) {
-    next(err);
+    sendSuccess(res, null, 'Password reset successful. You can now login with your new password.');
+  } catch (error) {
+    next(error);
   }
 }
 
+/**
+ * Get current user profile
+ * GET /api/auth/me
+ */
 export async function getProfile(req, res, next) {
   try {
-    const { _id, name, email, role } = req.user;
-    res.json({ success: true, data: { id: _id, name, email, role } });
-  } catch (err) {
-    next(err);
+    const { _id, name, email, role, avatar, bio, createdAt, lastLoginAt } = req.user;
+    
+    sendSuccess(res, {
+      id: _id,
+      name,
+      email,
+      role,
+      avatar,
+      bio,
+      createdAt,
+      lastLoginAt,
+    });
+  } catch (error) {
+    next(error);
   }
 }
 
+/**
+ * Change password (authenticated)
+ * PATCH /api/auth/change-password
+ */
 export async function changePassword(req, res, next) {
   try {
-    const userFromToken = req.user;
-    const user = await User.findById(userFromToken._id);
-    if (!user) return res.status(404).json({ success: false, message: 'User not found' });
-
     const { currentPassword, newPassword } = req.body;
-    const isMatch = await user.comparePassword(currentPassword);
-    if (!isMatch) return res.status(400).json({ success: false, message: 'Current password is incorrect' });
-
-    user.password = newPassword;
-    await user.save();
-
-    res.json({ success: true, message: 'Password updated successfully' });
-  } catch (err) {
-    next(err);
+    
+    await authService.changePassword(req.user._id, currentPassword, newPassword);
+    
+    sendSuccess(res, null, 'Password changed successfully');
+  } catch (error) {
+    next(error);
   }
 }
+
+export default {
+  register,
+  login,
+  logout,
+  refreshToken,
+  forgotPassword,
+  resetPassword,
+  getProfile,
+  changePassword,
+};

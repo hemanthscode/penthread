@@ -1,43 +1,117 @@
+/**
+ * Post Routes
+ * 
+ * Defines all post-related endpoints with proper authorization.
+ * 
+ * @module modules/posts/routes
+ */
+
 import { Router } from 'express';
 import * as postController from './post.controller.js';
+import * as commentController from '../comments/comment.controller.js';  
 import authMiddleware from '../../middlewares/auth.middleware.js';
 import validate from '../../middlewares/validate.middleware.js';
-import { createPostSchema, updatePostSchema } from './post.validators.js';
+import {
+  createPostSchema,
+  updatePostSchema,
+  rejectPostSchema,
+  getPostsQuerySchema,
+} from './post.validators.js';
+import { createCommentSchema } from '../comments/comment.validators.js';  
 
 const router = Router();
 
 // ==================== PUBLIC ROUTES (with optional auth) ====================
-// Get published posts - supports both guests and authenticated users
-router.get('/public', authMiddleware([], true), postController.getPublicPosts);
+router.get(
+  '/public',
+  authMiddleware([], true),
+  validate(getPostsQuerySchema, 'query'),
+  postController.getPublicPosts
+);
 
 // ==================== AUTHOR ROUTES ====================
-// Author's own posts (all statuses)
-router.get('/my-posts', authMiddleware(['author', 'admin']), postController.getMyPosts);
+router.get(
+  '/my-posts',
+  authMiddleware(['author', 'admin']),
+  validate(getPostsQuerySchema, 'query'),
+  postController.getMyPosts
+);
 
 // ==================== ADMIN ROUTES ====================
-// Admin sees all posts (all statuses, all authors)
-router.get('/admin/all', authMiddleware(['admin']), postController.getAllPostsAdmin);
+router.get(
+  '/admin/all',
+  authMiddleware(['admin']),
+  validate(getPostsQuerySchema, 'query'),
+  postController.getAllPostsAdmin
+);
 
-// Admin moderation
-router.patch('/:postId/approve', authMiddleware(['admin']), postController.approvePost);
-router.patch('/:postId/reject', authMiddleware(['admin']), postController.rejectPost);
+router.patch(
+  '/:postId/approve',
+  authMiddleware(['admin']),
+  postController.approvePost
+);
+
+router.patch(
+  '/:postId/reject',
+  authMiddleware(['admin']),
+  validate(rejectPostSchema),
+  postController.rejectPost
+);
 
 // ==================== PROTECTED CRUD ROUTES ====================
-// Create post (author/admin)
-router.post('/', authMiddleware(['author', 'admin']), validate(createPostSchema), postController.createPost);
+router.post(
+  '/',
+  authMiddleware(['author', 'admin']),
+  validate(createPostSchema),
+  postController.createPost
+);
 
-// Update post (author of post or admin)
-router.patch('/:postId', authMiddleware(['author', 'admin']), validate(updatePostSchema), postController.updatePost);
+router.patch(
+  '/:postId',
+  authMiddleware(['author', 'admin']),
+  validate(updatePostSchema),
+  postController.updatePost
+);
 
-// Delete post (author of post or admin)
-router.delete('/:postId', authMiddleware(['author', 'admin']), postController.deletePost);
+router.delete(
+  '/:postId',
+  authMiddleware(['author', 'admin']),
+  postController.deletePost
+);
 
-// Publish/unpublish (author of post or admin)
-router.patch('/:postId/publish', authMiddleware(['author', 'admin']), postController.publishPost);
-router.patch('/:postId/unpublish', authMiddleware(['author', 'admin']), postController.unpublishPost);
+router.patch(
+  '/:postId/publish',
+  authMiddleware(['author', 'admin']),
+  postController.publishPost
+);
 
-// ==================== SINGLE POST (MUST BE LAST with optional auth) ====================
-// Get single post - supports both guests and authenticated users
-router.get('/:postId', authMiddleware([], true), postController.getPost);
+router.patch(
+  '/:postId/unpublish',
+  authMiddleware(['author', 'admin']),
+  postController.unpublishPost
+);
+
+// ==================== COMMENT ROUTES (NESTED UNDER POSTS) ====================
+
+// Get comments for a post (public)
+router.get(
+  '/:postId/comments',
+  commentController.getComments
+);
+
+// Create comment on a post (authenticated)
+router.post(
+  '/:postId/comments',
+  authMiddleware(['user', 'author', 'admin']),
+  validate(createCommentSchema),
+  commentController.createComment
+);
+
+// ==================== SINGLE POST (MUST BE LAST) ====================
+router.get(
+  '/:postId',
+  authMiddleware([], true),
+  postController.getPost
+);
 
 export default router;

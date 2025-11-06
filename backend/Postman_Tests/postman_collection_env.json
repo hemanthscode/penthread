@@ -1,117 +1,233 @@
 {
-  "id": "blog-backend-testing-env",
-  "name": "BlogPlatform Production API Environment",
+  "name": "Blog Platform - Development",
   "values": [
     {
-      "key": "base_url",
-      "value": "http://localhost:4000/api",
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
       "type": "default",
       "enabled": true
     },
     {
-      "key": "admin_email",
-      "value": "admin@blog.com",
+      "key": "adminEmail",
+      "value": "",
       "type": "default",
       "enabled": true
     },
     {
-      "key": "admin_password",
-      "value": "Admin@123",
-      "type": "default",
-      "enabled": true
-    },
-    {
-      "key": "author_email",
-      "value": "alice.author@blog.com",
-      "type": "default",
-      "enabled": true
-    },
-    {
-      "key": "author_password",
-      "value": "Admin@123",
-      "type": "default",
-      "enabled": true
-    },
-    {
-      "key": "user_email",
-      "value": "john.user@blog.com",
-      "type": "default",
-      "enabled": true
-    },
-    {
-      "key": "user_password",
-      "value": "User@123",
-      "type": "default",
-      "enabled": true
-    },
-    {
-      "key": "admin_access_token",
+      "key": "adminPassword",
       "value": "",
       "type": "secret",
       "enabled": true
     },
     {
-      "key": "admin_refresh_token",
+      "key": "adminAccessToken",
       "value": "",
       "type": "secret",
       "enabled": true
     },
     {
-      "key": "author_access_token",
+      "key": "adminRefreshToken",
       "value": "",
       "type": "secret",
       "enabled": true
     },
     {
-      "key": "author_refresh_token",
-      "value": "",
-      "type": "secret",
-      "enabled": true
-    },
-    {
-      "key": "user_access_token",
-      "value": "",
-      "type": "secret",
-      "enabled": true
-    },
-    {
-      "key": "user_refresh_token",
-      "value": "",
-      "type": "secret",
-      "enabled": true
-    },
-    {
-      "key": "active_access_token",
-      "value": "",
-      "type": "secret",
-      "enabled": true
-    },
-    {
-      "key": "active_refresh_token",
-      "value": "",
-      "type": "secret",
-      "enabled": true
-    },
-    {
-      "key": "latest_post_id",
+      "key": "adminUserId",
       "value": "",
       "type": "default",
       "enabled": true
     },
     {
-      "key": "latest_comment_id",
+      "key": "authorEmail",
       "value": "",
       "type": "default",
       "enabled": true
     },
     {
-      "key": "notification_id",
+      "key": "authorPassword",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "authorAccessToken",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "authorRefreshToken",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "authorUserId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "userEmail",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "userPassword",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "userAccessToken",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "userRefreshToken",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "userId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "resetToken",
+      "value": "",
+      "type": "secret",
+      "enabled": true
+    },
+    {
+      "key": "categoryTechId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "categoryTechSlug",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "categoryLifestyleId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "categoryTravelId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "tagJsId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "tagNodeId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "tagReactId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "tagMongoId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "tagTutorialId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "post1Id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "post1Slug",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "post2Id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "post3Id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "rejectTestPostId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "comment1Id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "comment2Id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "comment3Id",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "spamCommentId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "deleteCommentId",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "longComment",
+      "value": "",
+      "type": "default",
+      "enabled": true
+    },
+    {
+      "key": "notificationId",
       "value": "",
       "type": "default",
       "enabled": true
     }
-  ],
-  "_postman_variable_scope": "environment",
-  "_postman_exported_at": "2025-10-22T06:45:00.000Z",
-  "_postman_exported_using": "Postman v11.0.0"
+  ]
 }

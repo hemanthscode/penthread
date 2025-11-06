@@ -1,296 +1,806 @@
 {
   "info": {
-    "_postman_id": "auth-module-collection-2025",
-    "name": "BlogPlatform Auth Module",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Postman collection for BlogPlatform Auth API endpoints with automated token handling"
+    "name": "Blog Platform - Auth Module",
+    "description": "Complete authentication testing with automatic variable chaining",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Register User",
-      "request": {
-        "method": "POST",
-        "header": [
-          { "key": "Content-Type", "value": "application/json" }
-        ],
-        "url": "{{base_url}}/auth/register",
-        "body": {
-          "mode": "raw",
-          "raw": "{\n  \"name\": \"New User\",\n  \"email\": \"new.user@blog.com\",\n  \"password\": \"User@123\"\n}"
-        }
-      },
-      "response": [],
+      "name": "1. Health Check",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Status is 201 Created\", function () {",
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response has success field', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "",
+              "pm.test('Server is healthy', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.message).to.eql('Server is healthy');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["health"]
+        },
+        "description": "Verify server is running"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Register - Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 201', function () {",
               "    pm.response.to.have.status(201);",
               "});",
               "",
-              "// Register does not set tokens, just confirm success",
-              "console.log('✅ Registered new user');"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Login - Admin",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": "{{base_url}}/auth/login",
-        "body": {
-          "mode": "raw",
-          "raw": "{\"email\":\"{{admin_email}}\",\"password\":\"{{admin_password}}\"}"
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Login successful\", function () {",
-              "    pm.response.to.have.status(200);",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.tokens).to.have.property('accessToken');",
+              "pm.test('Response has success field', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
               "});",
               "",
-              "// Save tokens in environment",
-              "var jsonData = pm.response.json();",
-              "pm.environment.set(\"admin_access_token\", jsonData.tokens.accessToken);",
-              "pm.environment.set(\"admin_refresh_token\", jsonData.tokens.refreshToken);",
-              "pm.environment.set(\"active_access_token\", jsonData.tokens.accessToken);",
-              "pm.environment.set(\"active_refresh_token\", jsonData.tokens.refreshToken);",
-              "console.log('✅ Admin tokens saved');"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Login - Author",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": "{{base_url}}/auth/login",
-        "body": {
-          "mode": "raw",
-          "raw": "{\"email\":\"{{author_email}}\",\"password\":\"{{author_password}}\"}"
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test(\"Login successful\", function () {",
-              "    pm.response.to.have.status(200);",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.tokens).to.have.property('accessToken');",
+              "pm.test('User ID is returned', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.userId).to.exist;",
+              "    pm.environment.set('adminUserId', jsonData.data.userId);",
               "});",
               "",
-              "// Save tokens in environment",
-              "var jsonData = pm.response.json();",
-              "pm.environment.set(\"author_access_token\", jsonData.tokens.accessToken);",
-              "pm.environment.set(\"author_refresh_token\", jsonData.tokens.refreshToken);"
-            ]
+              "pm.test('Email matches', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.email).to.eql(pm.environment.get('adminEmail'));",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "// Set admin credentials",
+              "pm.environment.set('adminEmail', 'admin@blogplatform.com');",
+              "pm.environment.set('adminPassword', 'Admin@123456');",
+              "pm.environment.set('adminName', 'Platform Admin');"
+            ],
+            "type": "text/javascript"
           }
         }
-      ]
-    },
-    {
-      "name": "Login - User",
+      ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": "{{base_url}}/auth/login",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\"email\":\"{{user_email}}\",\"password\":\"{{user_password}}\"}"
-        }
+          "raw": "{\n  \"name\": \"{{adminName}}\",\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "register"]
+        },
+        "description": "Register admin user"
       },
+      "response": []
+    },
+    {
+      "name": "3. Login - Admin",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test(\"Login successful\", function () {",
+              "pm.test('Status is 200', function () {",
               "    pm.response.to.have.status(200);",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData.tokens).to.have.property('accessToken');",
               "});",
               "",
-              "// Save tokens in environment",
-              "var jsonData = pm.response.json();",
-              "pm.environment.set(\"user_access_token\", jsonData.tokens.accessToken);",
-              "pm.environment.set(\"user_refresh_token\", jsonData.tokens.refreshToken);"
-            ]
+              "pm.test('Response has tokens', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.tokens).to.exist;",
+              "    pm.expect(jsonData.data.tokens.accessToken).to.exist;",
+              "    pm.expect(jsonData.data.tokens.refreshToken).to.exist;",
+              "});",
+              "",
+              "pm.test('Save admin tokens', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.environment.set('adminAccessToken', jsonData.data.tokens.accessToken);",
+              "    pm.environment.set('adminRefreshToken', jsonData.data.tokens.refreshToken);",
+              "});",
+              "",
+              "pm.test('User role is admin', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.user.role).to.eql('admin');",
+              "});"
+            ],
+            "type": "text/javascript"
           }
         }
-      ]
-    },
-    {
-      "name": "Refresh Token",
+      ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": "{{base_url}}/auth/refresh",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
         "body": {
           "mode": "raw",
-          "raw": "{\"refreshToken\":\"{{active_refresh_token}}\"}"
-        }
+          "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "login"]
+        },
+        "description": "Login as admin and store tokens"
       },
+      "response": []
+    },
+    {
+      "name": "4. Get Admin Profile",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "if (pm.response.code === 200) {",
-              "    var jsonData = pm.response.json();",
-              "    pm.environment.set(\"active_access_token\", jsonData.accessToken);",
-              "    pm.environment.set(\"active_refresh_token\", jsonData.refreshToken);",
-              "    console.log('♻️ Token refreshed');",
-              "} else {",
-              "    console.warn('Failed to refresh token');",
-              "}"
-            ]
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Profile data is returned', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.email).to.eql(pm.environment.get('adminEmail'));",
+              "    pm.expect(jsonData.data.role).to.eql('admin');",
+              "});"
+            ],
+            "type": "text/javascript"
           }
         }
-      ]
-    },
-    {
-      "name": "Get Profile",
+      ],
       "request": {
         "method": "GET",
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{active_access_token}}"
+            "value": "Bearer {{adminAccessToken}}"
           }
         ],
-        "url": "{{base_url}}/auth/me"
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "me"]
+        },
+        "description": "Get admin profile using access token"
       },
+      "response": []
+    },
+    {
+      "name": "5. Register - Author",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test('Profile fetched successfully', function () {",
-              "    pm.response.to.have.status(200);",
-              "    var jsonData = pm.response.json();",
-              "    pm.expect(jsonData).to.have.property('email');",
-              "    pm.expect(jsonData).to.have.property('role');",
+              "pm.test('Status is 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('Author ID saved', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.environment.set('authorUserId', jsonData.data.userId);",
               "});"
-            ]
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.environment.set('authorEmail', 'author@blogplatform.com');",
+              "pm.environment.set('authorPassword', 'Author@123456');",
+              "pm.environment.set('authorName', 'John Author');"
+            ],
+            "type": "text/javascript"
           }
         }
-      ]
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{authorName}}\",\n  \"email\": \"{{authorEmail}}\",\n  \"password\": \"{{authorPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "register"]
+        },
+        "description": "Register author user"
+      },
+      "response": []
     },
     {
-      "name": "Logout",
+      "name": "6. Login - Author",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Save author tokens', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.environment.set('authorAccessToken', jsonData.data.tokens.accessToken);",
+              "    pm.environment.set('authorRefreshToken', jsonData.data.tokens.refreshToken);",
+              "});",
+              "",
+              "pm.test('User role is user (default)', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.user.role).to.eql('user');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{authorEmail}}\",\n  \"password\": \"{{authorPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "login"]
+        },
+        "description": "Login as author"
+      },
+      "response": []
+    },
+    {
+      "name": "7. Update Author Role (Admin Action)",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Role updated to author', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.role).to.eql('author');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{adminAccessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"role\": \"author\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/users/{{authorUserId}}/role",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "users", "{{authorUserId}}", "role"]
+        },
+        "description": "Admin updates user role to author"
+      },
+      "response": []
+    },
+    {
+      "name": "8. Register - Regular User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 201', function () {",
+              "    pm.response.to.have.status(201);",
+              "});",
+              "",
+              "pm.test('User ID saved', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.environment.set('userId', jsonData.data.userId);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.environment.set('userEmail', 'user@blogplatform.com');",
+              "pm.environment.set('userPassword', 'User@123456');",
+              "pm.environment.set('userName', 'Bob Reader');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"name\": \"{{userName}}\",\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/register",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "register"]
+        },
+        "description": "Register regular user"
+      },
+      "response": []
+    },
+    {
+      "name": "9. Login - Regular User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Save user tokens', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.environment.set('userAccessToken', jsonData.data.tokens.accessToken);",
+              "    pm.environment.set('userRefreshToken', jsonData.data.tokens.refreshToken);",
+              "});",
+              "",
+              "pm.test('User role is user', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.user.role).to.eql('user');",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"{{userPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "login"]
+        },
+        "description": "Login as regular user"
+      },
+      "response": []
+    },
+    {
+      "name": "10. Refresh Token - Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('New tokens received', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.data.tokens.accessToken).to.exist;",
+              "    pm.expect(jsonData.data.tokens.refreshToken).to.exist;",
+              "});",
+              "",
+              "pm.test('Update admin tokens', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.environment.set('adminAccessToken', jsonData.data.tokens.accessToken);",
+              "    pm.environment.set('adminRefreshToken', jsonData.data.tokens.refreshToken);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"refreshToken\": \"{{adminRefreshToken}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/refresh",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "refresh"]
+        },
+        "description": "Refresh admin access token"
+      },
+      "response": []
+    },
+    {
+      "name": "11. Change Password - Author",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Password changed successfully', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "",
+              "// Update environment with new password",
+              "pm.environment.set('authorPassword', pm.environment.get('authorNewPassword'));"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.environment.set('authorNewPassword', 'NewAuthor@123456');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "PATCH",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authorAccessToken}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"currentPassword\": \"Author@123456\",\n  \"newPassword\": \"{{authorNewPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/change-password",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "change-password"]
+        },
+        "description": "Author changes password"
+      },
+      "response": []
+    },
+    {
+      "name": "12. Login with New Password - Author",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Login successful with new password', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "    pm.environment.set('authorAccessToken', jsonData.data.tokens.accessToken);",
+              "    pm.environment.set('authorRefreshToken', jsonData.data.tokens.refreshToken);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{authorEmail}}\",\n  \"password\": \"{{authorPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "login"]
+        },
+        "description": "Verify login works with new password"
+      },
+      "response": []
+    },
+    {
+      "name": "13. Forgot Password - User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Reset token returned (dev mode)', function () {",
+              "    const jsonData = pm.response.json();",
+              "    if (jsonData.data && jsonData.data.resetToken) {",
+              "        pm.environment.set('resetToken', jsonData.data.resetToken);",
+              "    }",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{userEmail}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/forgot-password",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "forgot-password"]
+        },
+        "description": "Request password reset (token returned in dev mode)"
+      },
+      "response": []
+    },
+    {
+      "name": "14. Reset Password - User",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Password reset successful', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});",
+              "",
+              "// Update environment with new password",
+              "pm.environment.set('userPassword', pm.environment.get('userNewPassword'));"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.environment.set('userNewPassword', 'ResetUser@123456');"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"password\": \"{{userNewPassword}}\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/reset-password",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "reset-password"]
+        },
+        "description": "Reset password using token"
+      },
+      "response": []
+    },
+    {
+      "name": "15. Logout - Admin",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Status is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Logout successful', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.true;",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
       "request": {
         "method": "POST",
         "header": [
           {
             "key": "Authorization",
-            "value": "Bearer {{active_access_token}}"
+            "value": "Bearer {{adminAccessToken}}"
           }
         ],
-        "url": "{{base_url}}/auth/logout"
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/logout",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "logout"]
+        },
+        "description": "Admin logout"
       },
+      "response": []
+    },
+    {
+      "name": "16. Test - Invalid Login",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test('Logout success', function () {",
-              "    pm.response.to.have.status(200);",
+              "pm.test('Status is 401', function () {",
+              "    pm.response.to.have.status(401);",
+              "});",
+              "",
+              "pm.test('Error message present', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.false;",
               "});"
-            ]
+            ],
+            "type": "text/javascript"
           }
         }
-      ]
-    },
-    {
-      "name": "Forgot Password",
+      ],
       "request": {
         "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": "{{base_url}}/auth/forgot-password",
-        "body": {
-          "mode": "raw",
-          "raw": "{\"email\":\"{{user_email}}\"}"
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Forgot password request success', function () {",
-              "    pm.response.to.have.status(200);",
-              "    var jsonData = pm.response.json();",
-              "    pm.environment.set('reset_token', jsonData.resetToken);",
-              "    console.log('Password reset token saved');",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Reset Password",
-      "request": {
-        "method": "POST",
-        "header": [{ "key": "Content-Type", "value": "application/json" }],
-        "url": "{{base_url}}/auth/reset-password",
-        "body": {
-          "mode": "raw",
-          "raw": "{\"token\":\"{{reset_token}}\",\"password\":\"NewPass@123\"}"
-        }
-      },
-      "event": [
-        {
-          "listen": "test",
-          "script": {
-            "exec": [
-              "pm.test('Password reset success', function () {",
-              "    pm.response.to.have.status(200);",
-              "});"
-            ]
-          }
-        }
-      ]
-    },
-    {
-      "name": "Change Password",
-      "request": {
-        "method": "PATCH",
         "header": [
-          { "key": "Content-Type", "value": "application/json" },
-          { "key": "Authorization", "value": "Bearer {{active_access_token}}" }
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
         ],
-        "url": "{{base_url}}/auth/change-password",
         "body": {
           "mode": "raw",
-          "raw": "{\"currentPassword\":\"User@123\",\"newPassword\":\"NewPass@123\"}"
-        }
+          "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"WrongPassword123\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/login",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "login"]
+        },
+        "description": "Test invalid credentials"
       },
+      "response": []
+    },
+    {
+      "name": "17. Test - Unauthorized Access",
       "event": [
         {
           "listen": "test",
           "script": {
             "exec": [
-              "pm.test('Password change success', function () {",
-              "    pm.response.to.have.status(200);",
+              "pm.test('Status is 401', function () {",
+              "    pm.response.to.have.status(401);",
+              "});",
+              "",
+              "pm.test('Unauthorized error', function () {",
+              "    const jsonData = pm.response.json();",
+              "    pm.expect(jsonData.success).to.be.false;",
               "});"
-            ]
+            ],
+            "type": "text/javascript"
           }
         }
-      ]
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/auth/me",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "auth", "me"]
+        },
+        "description": "Test access without token"
+      },
+      "response": []
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:4000",
+      "type": "string"
     }
   ]
 }

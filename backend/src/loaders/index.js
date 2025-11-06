@@ -1,21 +1,34 @@
-import { connectDB } from '../config/database.js';
-import logger from '../config/logger.js';
-import createExpressApp from './express.js';
+/**
+ * Application Initialization Loader
+ * 
+ * Initializes database connection and Express app.
+ * 
+ * @module loaders
+ */
 
+import { connectDB } from '../config/database.js';
+import createExpressApp from './express.js';
+import logger from '../config/logger.js';
+
+/**
+ * Initializes the application
+ * @returns {Promise<Object>} Express app instance
+ */
 export async function init() {
   try {
+    // Connect to database
     await connectDB();
-    logger.info('Database connection established.');
+    logger.info('✓ Database connected');
+
+    // Create Express app
+    const app = createExpressApp();
+    logger.info('✓ Express app initialized');
+
+    return app;
   } catch (error) {
-    logger.error('Failed to connect to the database during app initialization.', error);
+    logger.error('Failed to initialize application:', error);
     process.exit(1);
   }
-
-  const app = createExpressApp();
-
-  // Initialize other loaders (cache, socket.io, etc.) here if needed
-
-  return app;
 }
 
-export default logger;
+export default { init };

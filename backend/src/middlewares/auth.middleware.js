@@ -1,70 +1,89 @@
-import jwt from 'jsonwebtoken';
-import config from '../config/index.js';
-import User from '../modules/auth/auth.model.js';
+/**
+ * Authentication Middleware
+ * 
+ * Verifies JWT tokens and enforces role-based access control.
+ * Supports optional authentication for public endpoints.
+ * 
+ * @module middlewares/auth
+ */
 
+import { verifyToken } from '../utils/crypto.js';
+import User from '../modules/auth/auth.model.js';
+import AppError from '../utils/AppError.js';
+import logger from '../config/logger.js';
+
+/**
+ * Authentication middleware factory
+ * @param {string[]} allowedRoles - Array of allowed roles
+ * @param {boolean} optional - Whether authentication is optional
+ * @returns {Function} Express middleware
+ */
 export default function authMiddleware(allowedRoles = [], optional = false) {
   return async (req, res, next) => {
     try {
       const authHeader = req.headers.authorization;
-      
-      // If optional auth and no token, continue as guest
+
+      // Handle optional authentication
       if (optional && (!authHeader || !authHeader.startsWith('Bearer '))) {
         req.user = null;
         return next();
       }
 
-      // If not optional and no token, reject
+      // Require authentication
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ message: 'Authorization header missing or invalid' });
+        throw AppError.unauthorized('Authorization header missing or invalid');
       }
 
       const token = authHeader.split(' ')[1];
-      
+
+      // Verify token
+      let decoded;
       try {
-        const decoded = jwt.verify(token, config.jwtSecret);
-
-        const user = await User.findById(decoded.id).select('-password');
-        
-        // If optional auth and user not found/inactive, continue as guest
-        if (optional && (!user || !user.isActive)) {
-          req.user = null;
-          console.log('⚠️ Invalid token, continuing as guest'); // DEBUG
-          return next();
-        }
-
-        // If not optional and user not found/inactive, reject
-        if (!user || !user.isActive) {
-          return res.status(401).json({ message: 'User not found or inactive' });
-        }
-
-        // Check roles if specified
-        if (allowedRoles.length && !allowedRoles.includes(user.role)) {
-          return res.status(403).json({ message: 'Access denied' });
-        }
-
-        req.user = user;
-        console.log('✅ User authenticated:', user._id, user.email); // DEBUG
-        next();
-      } catch (tokenError) {
-        // If optional auth and token invalid, continue as guest
+        decoded = verifyToken(token);
+      } catch (error) {
+        // Handle optional auth token errors
         if (optional) {
           req.user = null;
-          console.log('⚠️ Token verification failed, continuing as guest'); // DEBUG
           return next();
         }
-        // If not optional, reject
-        return res.status(401).json({ message: 'Invalid or expired token' });
+        throw AppError.unauthorized(error.message);
       }
-    } catch (error) {
-      console.error('Auth middleware error:', error);
+
+      // Fetch user from database
+      const user = await User.findById(decoded.id).select('-password');
+
+      if (!user) {
+        if (optional) {
+          req.user = null;
+          return next();
+        }
+        throw AppError.unauthorized('User not found');
+      }
+
+      if (!user.isActive) {
+        throw AppError.forbidden('Account is deactivated');
+      }
+
+      // Check role authorization
+      if (allowedRoles.length > 0 && !allowedRoles.includes(user.role)) {
+        throw AppError.forbidden('Insufficient permissions');
+      }
+
+      // Attach user to request
+      req.user = user;
       
-      // If optional auth, continue as guest on any error
-      if (optional) {
+      // Add user ID to logger context
+      if (req.logger) {
+        req.logger = req.logger.child({ userId: user._id });
+      }
+
+      next();
+    } catch (error) {
+      if (optional && !error.isOperational) {
         req.user = null;
         return next();
       }
-      
-      return res.status(401).json({ message: 'Invalid or expired token' });
+      next(error);
     }
   };
 }

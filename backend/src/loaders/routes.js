@@ -1,5 +1,14 @@
+/**
+ * Routes Loader
+ * 
+ * Aggregates all module routes into the main router.
+ * 
+ * @module loaders/routes
+ */
+
 import { Router } from 'express';
 
+// Import all module routes
 import authRoutes from '../modules/auth/auth.routes.js';
 import userRoutes from '../modules/users/user.routes.js';
 import postRoutes from '../modules/posts/post.routes.js';
@@ -13,6 +22,7 @@ import activityRoutes from '../modules/activity/activity.routes.js';
 
 const router = Router();
 
+// Mount routes
 router.use('/auth', authRoutes);
 router.use('/users', userRoutes);
 router.use('/posts', postRoutes);

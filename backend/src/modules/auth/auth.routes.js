@@ -1,20 +1,73 @@
+/**
+ * Authentication Routes
+ * 
+ * Defines all authentication-related endpoints.
+ * 
+ * @module modules/auth/routes
+ */
+
 import { Router } from 'express';
 import * as authController from './auth.controller.js';
 import validate from '../../middlewares/validate.middleware.js';
-import { registerSchema, loginSchema, forgotPasswordSchema, resetPasswordSchema, changePasswordSchema } from './auth.validators.js';
 import authMiddleware from '../../middlewares/auth.middleware.js';
+import { authRateLimiter } from '../../config/appConfig.js';
+import {
+  registerSchema,
+  loginSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
+  changePasswordSchema,
+  refreshTokenSchema,
+} from './auth.validators.js';
 
 const router = Router();
 
-router.post('/register', validate(registerSchema), authController.register);
-router.post('/login', validate(loginSchema), authController.login);
-router.post('/logout', authMiddleware(['admin', 'author', 'user']), authController.logout);
-router.post('/refresh', authController.refreshToken);
+// Public routes with strict rate limiting
+router.post(
+  '/register',
+  authRateLimiter,
+  validate(registerSchema),
+  authController.register
+);
 
-router.post('/forgot-password', validate(forgotPasswordSchema), authController.forgotPassword);
-router.post('/reset-password', validate(resetPasswordSchema), authController.resetPassword);
+router.post(
+  '/login',
+  authRateLimiter,
+  validate(loginSchema),
+  authController.login
+);
 
-router.get('/me', authMiddleware(['admin', 'author', 'user']), authController.getProfile);
-router.patch('/change-password', authMiddleware(['admin', 'author', 'user']), validate(changePasswordSchema), authController.changePassword);
+router.post(
+  '/forgot-password',
+  authRateLimiter,
+  validate(forgotPasswordSchema),
+  authController.forgotPassword
+);
+
+router.post(
+  '/reset-password',
+  authRateLimiter,
+  validate(resetPasswordSchema),
+  authController.resetPassword
+);
+
+router.post(
+  '/refresh',
+  validate(refreshTokenSchema),
+  authController.refreshToken
+);
+
+// Protected routes (require authentication)
+router.use(authMiddleware(['admin', 'author', 'user']));
+
+router.post('/logout', authController.logout);
+
+router.get('/me', authController.getProfile);
+
+router.patch(
+  '/change-password',
+  validate(changePasswordSchema),
+  authController.changePassword
+);
 
 export default router;
