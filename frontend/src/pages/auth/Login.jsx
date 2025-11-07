@@ -1,32 +1,31 @@
-// src/pages/auth/Login.jsx
 import { useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Lock, BookOpen, Eye, EyeOff, User } from 'lucide-react';
 import { useAuth } from '../../hooks';
+import { useToast } from '../../context/ToastContext'; 
 import Button from '../../components/common/Button';
 import Input from '../../components/common/Input';
 import Alert from '../../components/common/Alert';
 import { ROUTES } from '../../utils/constants';
-import toast from 'react-hot-toast';
 
 const quickLogins = [
   {
     label: 'Admin Login',
-    email: 'admin@blog.com',
-    password: 'Admin@123',
+    email: 'hemanth@gmail.com',
+    password: 'Test@123',
     color: 'bg-red-600 hover:bg-red-700',
   },
   {
     label: 'Author Login',
-    email: 'alice.author@blog.com',
+    email: 'meghi@gmail.com',
     password: 'Author@123',
     color: 'bg-blue-600 hover:bg-blue-700',
   },
   {
     label: 'User Login',
-    email: 'john.user@blog.com',
-    password: 'User@123',
+    email: 'adi@user.com',
+    password: 'Test@123',
     color: 'bg-green-600 hover:bg-green-700',
   },
 ];
@@ -35,7 +34,8 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { login } = useAuth();
-  
+  const { addToast } = useToast(); // ✅ initialize our toast system
+
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -44,8 +44,8 @@ const Login = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors((prev) => ({ ...prev, [name]: '' }));
   };
 
   const validate = () => {
@@ -63,16 +63,18 @@ const Login = () => {
     try {
       const result = await login({ email, password });
       if (result.success) {
-        toast.success('Login successful!');
+        addToast('Login successful!', 'success'); // ✅ success toast
         const from = location.state?.from?.pathname || ROUTES.DASHBOARD;
         navigate(from, { replace: true });
       } else {
-        setError(result.error || 'Login failed. Please try again.');
-        toast.error(result.error || 'Login failed');
+        const message = result.error || 'Login failed. Please try again.';
+        setError(message);
+        addToast(message, 'error'); // ✅ error toast
       }
     } catch (err) {
-      setError('An unexpected error occurred. Please try again.');
-      toast.error('Login failed');
+      const message = 'An unexpected error occurred. Please try again.';
+      setError(message);
+      addToast('Login failed', 'error');
     } finally {
       setLoading(false);
     }
@@ -96,7 +98,6 @@ const Login = () => {
         animate={{ opacity: 1, y: 0 }}
         className="max-w-md w-full space-y-8"
       >
-        {/* Logo and Title */}
         <div className="text-center">
           <div className="flex justify-center">
             <BookOpen className="h-12 w-12 text-primary-600 dark:text-primary-400" />
@@ -109,10 +110,8 @@ const Login = () => {
           </p>
         </div>
 
-        {/* Error Alert */}
         {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-        {/* Quick Login Buttons */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {quickLogins.map((item) => (
             <button
@@ -128,14 +127,12 @@ const Login = () => {
           ))}
         </div>
 
-        {/* Divider */}
         <div className="flex items-center my-4">
           <div className="flex-grow h-px bg-gray-300 dark:bg-gray-700" />
           <span className="mx-2 text-sm text-gray-500 dark:text-gray-400">or</span>
           <div className="flex-grow h-px bg-gray-300 dark:bg-gray-700" />
         </div>
 
-        {/* Login Form */}
         <form onSubmit={handleSubmit} className="mt-6 space-y-6">
           <div className="space-y-4">
             <Input
@@ -167,7 +164,11 @@ const Login = () => {
                 onClick={() => setShowPassword(!showPassword)}
                 className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
               >
-                {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                {showPassword ? (
+                  <EyeOff className="h-5 w-5" />
+                ) : (
+                  <Eye className="h-5 w-5" />
+                )}
               </button>
             </div>
           </div>

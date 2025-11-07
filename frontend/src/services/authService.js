@@ -4,18 +4,17 @@ import storageService from '../utils/storage';
 class AuthService {
   async register(userData) {
     const response = await api.post('/auth/register', userData);
+    // Backend returns userId, name, email, role directly in data
     return response.data;
   }
 
   async login(credentials) {
     const response = await api.post('/auth/login', credentials);
-    if (response.data.success && response.data.tokens) {
-      storageService.setAccessToken(response.data.tokens.accessToken);
-      storageService.setRefreshToken(response.data.tokens.refreshToken);
-      storageService.setUser({
-        id: response.data.userId,
-        role: response.data.role,
-      });
+    if (response.data.success && response.data.data.tokens) {
+      storageService.setAccessToken(response.data.data.tokens.accessToken);
+      storageService.setRefreshToken(response.data.data.tokens.refreshToken);
+      storageService.setUser(response.data.data.user);
+      // user fields: id, name, email, role
     }
     return response.data;
   }

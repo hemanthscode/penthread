@@ -45,7 +45,7 @@ const Notifications = () => {
         );
         toast.success('Marked as read');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to mark as read');
     }
   };
@@ -57,7 +57,7 @@ const Notifications = () => {
         setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
         toast.success('All notifications marked as read');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to mark all as read');
     }
   };
@@ -69,7 +69,7 @@ const Notifications = () => {
         setNotifications((prev) => prev.filter((n) => n._id !== notificationId));
         toast.success('Notification deleted');
       }
-    } catch (error) {
+    } catch {
       toast.error('Failed to delete notification');
     }
   };
@@ -131,16 +131,10 @@ const Notifications = () => {
                       <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100">
                         {notification.title}
                       </h3>
-                      {!notification.isRead && (
-                        <span className="h-2 w-2 bg-primary-600 rounded-full"></span>
-                      )}
+                      {!notification.isRead && <span className="h-2 w-2 bg-primary-600 rounded-full"></span>}
                     </div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                      {notification.message}
-                    </p>
-                    <p className="text-xs text-gray-500 dark:text-gray-500">
-                      {formatRelativeTime(notification.createdAt)}
-                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">{notification.message}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-500">{formatRelativeTime(notification.createdAt)}</p>
                   </div>
                   <div className="flex items-center space-x-2 ml-4">
                     {!notification.isRead && (

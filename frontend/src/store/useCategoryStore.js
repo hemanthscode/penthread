@@ -5,62 +5,61 @@ import toast from 'react-hot-toast';
 const useCategoryStore = create((set) => ({
   categories: [],
   loading: false,
+  error: null,
 
   fetchCategories: async () => {
-    set({ loading: true });
+    set({ loading: true, error: null });
     try {
-      const response = await categoryService.getCategories();
-      if (response.success) {
-        set({ categories: response.data, loading: false });
-      }
+      const { success, data } = await categoryService.getCategories();
+      set({ categories: success ? data : [], loading: false });
     } catch (error) {
-      set({ loading: false });
-      console.error('Failed to fetch categories');
+      set({ loading: false, error: error.message });
+      toast.error('Failed to fetch categories');
     }
   },
 
   createCategory: async (categoryData) => {
     try {
-      const response = await categoryService.createCategory(categoryData);
-      if (response.success) {
-        set((state) => ({ categories: [...state.categories, response.data] }));
-        toast.success('Category created');
+      const { success, data } = await categoryService.createCategory(categoryData);
+      if (success) {
+        set((state) => ({ categories: [...state.categories, data] }));
+        toast.success('Category created successfully');
         return { success: true };
       }
     } catch (error) {
-      toast.error('Failed to create category');
+      toast.error(error.response?.data?.message || 'Failed to create category');
       return { success: false };
     }
   },
 
   updateCategory: async (categoryId, categoryData) => {
     try {
-      const response = await categoryService.updateCategory(categoryId, categoryData);
-      if (response.success) {
+      const { success, data } = await categoryService.updateCategory(categoryId, categoryData);
+      if (success) {
         set((state) => ({
-          categories: state.categories.map((c) => (c._id === categoryId ? response.data : c)),
+          categories: state.categories.map((c) => (c._id === categoryId ? data : c)),
         }));
-        toast.success('Category updated');
+        toast.success('Category updated successfully');
         return { success: true };
       }
     } catch (error) {
-      toast.error('Failed to update category');
+      toast.error(error.response?.data?.message || 'Failed to update category');
       return { success: false };
     }
   },
 
   deleteCategory: async (categoryId) => {
     try {
-      const response = await categoryService.deleteCategory(categoryId);
-      if (response.success) {
+      const { success } = await categoryService.deleteCategory(categoryId);
+      if (success) {
         set((state) => ({
           categories: state.categories.filter((c) => c._id !== categoryId),
         }));
-        toast.success('Category deleted');
+        toast.success('Category deleted successfully');
         return { success: true };
       }
     } catch (error) {
-      toast.error('Failed to delete category');
+      toast.error(error.response?.data?.message || 'Failed to delete category');
       return { success: false };
     }
   },

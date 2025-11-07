@@ -1,20 +1,14 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Activity as ActivityIcon,
-  UserPlus,
+  Activity,
   FileText,
   MessageCircle,
-  Heart,
-  Bookmark,
-  Share2,
-  Eye,
+  User,
+  Lock,
   Edit,
   Trash,
-  CheckCircle,
-  XCircle,
-  FolderPlus,
-  Tag,
+  Send,
 } from 'lucide-react';
 import Container from '../../components/layout/Container';
 import PageHeader from '../../components/layout/PageHeader';
@@ -26,7 +20,7 @@ import activityService from '../../services/activityService';
 import { formatRelativeTime } from '../../utils/helpers';
 import toast from 'react-hot-toast';
 
-const Activity = () => {
+const ActivityLog = () => {
   const [activities, setActivities] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -49,58 +43,41 @@ const Activity = () => {
     }
   };
 
-  const getActivityIcon = (action) => {
-    const iconMap = {
-      user_registered: UserPlus,
-      create_post: FileText,
-      publish_post: FileText,
-      edit_post: Edit,
-      delete_post: Trash,
-      comment_post: MessageCircle,
-      like_post: Heart,
-      favorite_post: Bookmark,
-      share_post: Share2,
-      view_post: Eye,
-      approve_post: CheckCircle,
-      reject_post: XCircle,
-      approve_comment: CheckCircle,
-      create_category: FolderPlus,
-      create_tag: Tag,
-    };
-    return iconMap[action] || ActivityIcon;
+  const iconMap = {
+    post_created: FileText,
+    post_published: Send,
+    post_updated: Edit,
+    post_deleted: Trash,
+    comment_created: MessageCircle,
+    comment_deleted: Trash,
+    profile_updated: User,
+    password_changed: Lock,
   };
 
+  const getActivityIcon = (action) => iconMap[action] || Activity;
+
   const getActivityColor = (action) => {
-    if (action.includes('approve')) return 'text-green-600 bg-green-50 dark:bg-green-900/20';
-    if (action.includes('reject') || action.includes('delete'))
-      return 'text-red-600 bg-red-50 dark:bg-red-900/20';
-    if (action.includes('publish') || action.includes('create'))
-      return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20';
-    if (action.includes('edit')) return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20';
-    if (action.includes('like') || action.includes('favorite'))
-      return 'text-pink-600 bg-pink-50 dark:bg-pink-900/20';
+    if (action.includes('published')) return 'text-green-600 bg-green-50 dark:bg-green-900/20';
+    if (action.includes('deleted')) return 'text-red-600 bg-red-50 dark:bg-red-900/20';
+    if (action.includes('created')) return 'text-blue-600 bg-blue-50 dark:bg-blue-900/20';
+    if (action.includes('updated') || action.includes('changed'))
+      return 'text-orange-600 bg-orange-50 dark:bg-orange-900/20';
+    if (action.includes('comment')) return 'text-purple-600 bg-purple-50 dark:bg-purple-900/20';
     return 'text-gray-600 bg-gray-50 dark:bg-gray-700';
   };
 
   const getActionLabel = (action) => {
     const labels = {
-      user_registered: 'Joined',
-      create_post: 'Created Post',
-      publish_post: 'Published Post',
-      edit_post: 'Edited Post',
-      delete_post: 'Deleted Post',
-      comment_post: 'Commented',
-      like_post: 'Liked',
-      favorite_post: 'Favorited',
-      share_post: 'Shared',
-      view_post: 'Viewed',
-      approve_post: 'Approved Post',
-      reject_post: 'Rejected Post',
-      approve_comment: 'Approved Comment',
-      create_category: 'Created Category',
-      create_tag: 'Created Tag',
+      post_created: 'Created Post',
+      post_published: 'Published Post',
+      post_updated: 'Updated Post',
+      post_deleted: 'Deleted Post',
+      comment_created: 'Created Comment',
+      comment_deleted: 'Deleted Comment',
+      profile_updated: 'Updated Profile',
+      password_changed: 'Changed Password',
     };
-    return labels[action] || action.replace(/_/g, ' ');
+    return labels[action] || action.replace(/_/g, ' ').replace(/\b\w/g, (l) => l.toUpperCase());
   };
 
   return (
@@ -108,14 +85,14 @@ const Activity = () => {
       <PageHeader
         title="Activity Log"
         description="Track your recent actions and engagement"
-        icon={ActivityIcon}
+        icon={Activity}
       />
 
       {loading ? (
         <Loader />
       ) : activities.length === 0 ? (
         <EmptyState
-          icon={ActivityIcon}
+          icon={Activity}
           title="No activity yet"
           message="Start exploring and your activities will appear here"
         />
@@ -161,4 +138,4 @@ const Activity = () => {
   );
 };
 
-export default Activity;
+export default ActivityLog;

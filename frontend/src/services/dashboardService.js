@@ -25,6 +25,11 @@ class DashboardService {
     const response = await api.get('/dashboard/user/summary');
     return response.data;
   }
+
+  async getUserStats() {
+    const response = await api.get('/dashboard/user/stats');
+    return response.data;
+  }
 }
 
 export default new DashboardService();

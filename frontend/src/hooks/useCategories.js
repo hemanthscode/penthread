@@ -2,11 +2,11 @@ import { useEffect } from 'react';
 import useCategoryStore from '../store/useCategoryStore';
 
 const useCategories = () => {
-  const { categories, loading, fetchCategories, createCategory, updateCategory, deleteCategory } =
+  const { categories, loading, error, fetchCategories, createCategory, updateCategory, deleteCategory } =
     useCategoryStore();
 
   useEffect(() => {
-    if (categories.length === 0) {
+    if (!categories.length && !loading) {
       fetchCategories();
     }
   }, []);
@@ -14,6 +14,7 @@ const useCategories = () => {
   return {
     categories,
     loading,
+    error,
     createCategory,
     updateCategory,
     deleteCategory,

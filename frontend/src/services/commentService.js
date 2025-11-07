@@ -1,24 +1,33 @@
-// src/services/commentService.js
 import api from './api';
 
 class CommentService {
-  async getComments(postId) {
-    const response = await api.get(`/comments/posts/${postId}/comments`);
+  async getComments(postId, params = {}) {
+    // Public route: GET /api/posts/:postId/comments
+    const response = await api.get(`/posts/${postId}/comments`, { params });
+    return response.data;
+  }
+
+  async getPendingComments() {
+    // Protected route: GET /api/comments/pending for author/admin
+    const response = await api.get('/comments/pending');
     return response.data;
   }
 
   async createComment(postId, content) {
-    const response = await api.post(`/comments/posts/${postId}/comments`, { content });
+    // POST /api/posts/:postId/comments
+    const response = await api.post(`/posts/${postId}/comments`, { content });
     return response.data;
   }
 
   async moderateComment(commentId, action) {
-    const response = await api.patch(`/comments/comments/${commentId}/moderate`, { action });
+    // PATCH /api/comments/:commentId/moderate
+    const response = await api.patch(`/comments/${commentId}/moderate`, { action });
     return response.data;
   }
 
   async deleteComment(commentId) {
-    const response = await api.delete(`/comments/comments/${commentId}`);
+    // DELETE /api/comments/:commentId
+    const response = await api.delete(`/comments/${commentId}`);
     return response.data;
   }
 }

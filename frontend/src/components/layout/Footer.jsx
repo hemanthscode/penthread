@@ -9,8 +9,6 @@ const Footer = () => {
     product: [
       { name: 'Home', path: ROUTES.HOME },
       { name: 'Posts', path: ROUTES.POSTS },
-      { name: 'Categories', path: ROUTES.CATEGORIES },
-      { name: 'Tags', path: ROUTES.TAGS },
     ],
     company: [
       { name: 'About', path: '/about' },

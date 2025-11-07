@@ -1,4 +1,3 @@
-// src/pages/auth/ForgotPassword.jsx
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -16,16 +15,15 @@ const ForgotPassword = () => {
 
   const validate = (values) => {
     const errors = {};
-    if (!values.email) {
-      errors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(values.email)) {
-      errors.email = 'Email is invalid';
-    }
+    if (!values.email) errors.email = 'Email is required';
+    else if (!/\S+@\S+\.\S+/.test(values.email)) errors.email = 'Email is invalid';
     return errors;
   };
 
-  const { values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting } =
-    useForm({ email: '' }, validate);
+  const { values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting } = useForm(
+    { email: '' },
+    validate
+  );
 
   const onSubmit = async (formValues) => {
     setError('');
@@ -40,39 +38,18 @@ const ForgotPassword = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full space-y-8"
-      >
-        {/* Logo and Title */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex justify-center">
             <BookOpen className="h-12 w-12 text-primary-600 dark:text-primary-400" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Forgot password?
-          </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Enter your email and we'll send you a reset link
-          </p>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-gray-100">Forgot password?</h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Enter your email and we'll send you a reset link</p>
         </div>
 
-        {/* Success Alert */}
-        {success && (
-          <Alert
-            type="success"
-            title="Email sent!"
-            message="Check your inbox for password reset instructions."
-          />
-        )}
+        {success && <Alert type="success" title="Email sent!" message="Check your inbox for password reset instructions." />}
+        {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-        {/* Error Alert */}
-        {error && (
-          <Alert type="error" message={error} onClose={() => setError('')} />
-        )}
-
-        {/* Forgot Password Form */}
         {!success && (
           <form onSubmit={(e) => handleSubmit(onSubmit)(e)} className="mt-8 space-y-6">
             <Input
@@ -88,23 +65,14 @@ const ForgotPassword = () => {
               required
             />
 
-            <Button
-              type="submit"
-              variant="primary"
-              fullWidth
-              loading={isSubmitting}
-              disabled={isSubmitting}
-            >
+            <Button type="submit" variant="primary" fullWidth loading={isSubmitting} disabled={isSubmitting}>
               Send reset link
             </Button>
           </form>
         )}
 
         <div className="text-center">
-          <Link
-            to={ROUTES.LOGIN}
-            className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
-          >
+          <Link to={ROUTES.LOGIN} className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back to login
           </Link>

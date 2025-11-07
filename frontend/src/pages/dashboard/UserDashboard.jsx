@@ -1,54 +1,58 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  Bookmark,
-  MessageCircle,
-  Heart,
-  TrendingUp,
-  FileText,
-  User,
-} from 'lucide-react';
+import { Heart, Bookmark, MessageCircle } from 'lucide-react';
 import Container from '../../components/layout/Container';
 import PageHeader from '../../components/layout/PageHeader';
 import Card from '../../components/common/Card';
-import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
+import EmptyState from '../../components/common/EmptyState';
 import dashboardService from '../../services/dashboardService';
-import { ROUTES } from '../../utils/constants';
 import toast from 'react-hot-toast';
 
+// Utility to convert backend post URL to frontend relative URL
+const toRelativePostUrl = (fullUrl) => fullUrl.replace('/api/posts/', '/posts/');
+
 const UserDashboard = () => {
-  const navigate = useNavigate();
   const [summary, setSummary] = useState(null);
+  const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchDashboardData();
+    fetchUserDashboard();
   }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchUserDashboard = async () => {
+    setLoading(true);
     try {
-      const summaryRes = await dashboardService.getUserSummary();
+      const [summaryRes, statsRes] = await Promise.all([
+        dashboardService.getUserSummary(),
+        dashboardService.getUserStats(),
+      ]);
       if (summaryRes.success) setSummary(summaryRes.data);
+      if (statsRes.success) setStats(statsRes.data);
     } catch (error) {
-      toast.error('Failed to load dashboard data');
+      toast.error('Failed to load user dashboard data');
     } finally {
       setLoading(false);
     }
   };
 
-  if (loading) {
-    return <Loader fullScreen />;
-  }
+  if (loading) return <Loader fullScreen />;
 
-  const statCards = [
+  const statsCards = [
     {
-      title: 'Favorite Posts',
-      value: summary?.favoritePostsCount || 0,
+      title: 'Liked Posts',
+      value: summary?.likedPostsCount || 0,
+      icon: Heart,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50 dark:bg-red-900/20',
+    },
+    {
+      title: 'Favorited Posts',
+      value: summary?.favoritedPostsCount || 0,
       icon: Bookmark,
-      color: 'text-yellow-600',
-      bgColor: 'bg-yellow-50 dark:bg-yellow-900/20',
+      color: 'text-indigo-600',
+      bgColor: 'bg-indigo-50 dark:bg-indigo-900/20',
     },
     {
       title: 'Comments Made',
@@ -60,115 +64,122 @@ const UserDashboard = () => {
   ];
 
   return (
-    <Container className="py-8">
+    <Container className="py-8 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <PageHeader
         title="My Dashboard"
-        description="Track your activity and favorite content"
-        icon={User}
+        description="Your engagement summary and recent activity"
       />
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        {statCards.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <Card hover>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      {stat.title}
-                    </p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                      {stat.value}
-                    </p>
-                  </div>
-                  <div className={`${stat.bgColor} p-3 rounded-lg`}>
-                    <Icon className={`h-8 w-8 ${stat.color}`} />
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-          );
-        })}
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-12">
+        {statsCards.map(({ title, value, icon: Icon, color, bgColor }) => (
+          <motion.div
+            key={title}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4, ease: 'easeOut' }}
+          >
+            <Card className="flex items-center space-x-6 p-6">
+              <div
+                className={`${bgColor} p-4 rounded-full flex items-center justify-center`}
+                style={{ width: 56, height: 56 }}
+              >
+                <Icon className={`h-7 w-7 ${color}`} />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
+                <p className="text-3xl font-extrabold text-gray-900 dark:text-gray-100">
+                  {value.toLocaleString()}
+                </p>
+              </div>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Activity Overview */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <Card>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Your Activity
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="flex items-center space-x-3 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-              <FileText className="h-8 w-8 text-blue-600" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Posts Read</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">24</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3 p-4 bg-red-50 dark:bg-red-900/20 rounded-lg">
-              <Heart className="h-8 w-8 text-red-600" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Posts Liked</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">18</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3 p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-              <TrendingUp className="h-8 w-8 text-green-600" />
-              <div>
-                <p className="text-sm text-gray-600 dark:text-gray-400">Engagement</p>
-                <p className="text-2xl font-bold text-gray-900 dark:text-gray-100">85%</p>
-              </div>
-            </div>
+      {/* Recent Interactions */}
+      <section className="mb-12">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Recent Interactions</h2>
+        {stats?.recentInteractions?.length > 0 ? (
+          <div className="space-y-4">
+            {stats.recentInteractions.map(({ _id, post, liked, favorited, updatedAt }) => (
+              <Card key={_id} className="flex flex-col sm:flex-row justify-between p-6">
+                <div>
+                  <h3 className="text-lg font-semibold text-primary-600 dark:text-primary-400 mb-1">
+                    <a
+                      href={toRelativePostUrl(post.postUrl)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:underline"
+                    >
+                      {post.title}
+                    </a>
+                  </h3>
+                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                    by {post.author?.name || 'Unknown Author'}
+                  </p>
+                </div>
+                <div className="mt-3 sm:mt-0 flex items-center space-x-4 text-sm">
+                  {liked && (
+                    <div className="flex items-center space-x-1 text-red-600">
+                      <Heart className="h-5 w-5" />
+                      <span>Liked</span>
+                    </div>
+                  )}
+                  {favorited && (
+                    <div className="flex items-center space-x-1 text-indigo-600">
+                      <Bookmark className="h-5 w-5" />
+                      <span>Favorited</span>
+                    </div>
+                  )}
+                  <time
+                    dateTime={updatedAt}
+                    className="text-gray-500 dark:text-gray-400"
+                    title={new Date(updatedAt).toLocaleString()}
+                  >
+                    {new Date(updatedAt).toLocaleDateString()}
+                  </time>
+                </div>
+              </Card>
+            ))}
           </div>
+        ) : (
+          <EmptyState title="No Recent Interactions" message="You have not interacted recently." />
+        )}
+      </section>
 
-          <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-            Keep exploring great content from our community!
-          </p>
-        </Card>
-      </motion.div>
-
-      {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.4 }}
-        className="mt-6"
-      >
-        <Card>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Button
-              variant="primary"
-              fullWidth
-              icon={FileText}
-              onClick={() => navigate(ROUTES.POSTS)}
-            >
-              Explore Posts
-            </Button>
-            <Button
-              variant="outline"
-              fullWidth
-              icon={Bookmark}
-              onClick={() => navigate('/favorites')}
-            >
-              View Favorites
-            </Button>
+      {/* Recent Comments */}
+      <section>
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-gray-100 mb-6">Recent Comments</h2>
+        {stats?.recentComments?.length > 0 ? (
+          <div className="space-y-4">
+            {stats.recentComments.map(({ _id, post, content, createdAt }) => (
+              <Card key={_id} className="p-6">
+                <p className="text-lg font-semibold text-primary-600 dark:text-primary-400 mb-1">
+                  <a
+                    href={toRelativePostUrl(post.postUrl)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:underline"
+                  >
+                    {post.title}
+                  </a>
+                </p>
+                <p className="text-gray-700 dark:text-gray-300 mb-2">{content}</p>
+                <time
+                  dateTime={createdAt}
+                  className="text-gray-500 dark:text-gray-400 text-sm"
+                  title={new Date(createdAt).toLocaleString()}
+                >
+                  {new Date(createdAt).toLocaleDateString()}
+                </time>
+              </Card>
+            ))}
           </div>
-        </Card>
-      </motion.div>
+        ) : (
+          <EmptyState title="No Recent Comments" message="You have not made any recent comments." />
+        )}
+      </section>
     </Container>
   );
 };

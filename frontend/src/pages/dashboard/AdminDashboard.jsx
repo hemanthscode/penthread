@@ -8,8 +8,6 @@ import {
   TrendingUp,
   Activity,
   PieChart,
-  BarChart3,
-  Plus,
 } from 'lucide-react';
 import Container from '../../components/layout/Container';
 import PageHeader from '../../components/layout/PageHeader';
@@ -18,7 +16,6 @@ import Button from '../../components/common/Button';
 import Loader from '../../components/common/Loader';
 import Badge from '../../components/common/Badge';
 import dashboardService from '../../services/dashboardService';
-import { ROUTES } from '../../utils/constants';
 import toast from 'react-hot-toast';
 
 const AdminDashboard = () => {
@@ -47,9 +44,7 @@ const AdminDashboard = () => {
     }
   };
 
-  if (loading) {
-    return <Loader fullScreen />;
-  }
+  if (loading) return <Loader fullScreen />;
 
   const statCards = [
     {
@@ -90,37 +85,24 @@ const AdminDashboard = () => {
     },
   ];
 
-  const postsByStatus = stats?.postsPerStatus || [];
-  const usersByRole = stats?.usersPerRole || [];
+  const postsByStatus = stats?.postsByStatus || [];
+  const usersByRole = stats?.usersByRole || [];
 
   return (
     <Container className="py-8">
-      <PageHeader
-        title="Admin Dashboard"
-        description="Manage your platform and monitor key metrics"
-        icon={Activity}
-      />
+      <PageHeader title="Admin Dashboard" description="Manage your platform and monitor key metrics" icon={Activity} />
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         {statCards.map((stat, index) => {
           const Icon = stat.icon;
           return (
-            <motion.div
-              key={stat.title}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
+            <motion.div key={stat.title} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.1 }}>
               <Card hover>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">
-                      {stat.title}
-                    </p>
-                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-                      {stat.value}
-                    </p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400 mb-1">{stat.title}</p>
+                    <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stat.value}</p>
                     <div className="flex items-center mt-2">
                       <TrendingUp className="h-4 w-4 text-green-600 mr-1" />
                       <span className="text-sm text-green-600">{stat.change}</span>
@@ -138,11 +120,7 @@ const AdminDashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         {/* Posts by Status */}
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.4 }}
-        >
+        <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.4 }}>
           <Card>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
@@ -152,24 +130,18 @@ const AdminDashboard = () => {
             </div>
             <div className="space-y-3">
               {postsByStatus.map((item) => (
-                <div key={item._id} className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <Badge
-                      variant={
-                        item._id === 'published'
-                          ? 'success'
-                          : item._id === 'pending'
-                          ? 'warning'
-                          : 'default'
-                      }
-                      className="capitalize"
-                    >
-                      {item._id}
+                <div key={item.status} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <Badge variant={item.status === 'published' ? 'success' : item.status === 'pending' ? 'warning' : 'default'} className="capitalize">
+                      {item.status}
                     </Badge>
                   </div>
-                  <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {item.count}
-                  </span>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div className="bg-primary-600 h-2 rounded-full" style={{ width: `${(item.count / summary.totalPosts) * 100}%` }} />
+                    </div>
+                    <span className="text-lg font-bold text-gray-900 dark:text-gray-100 min-w-[3rem] text-right">{item.count}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -177,38 +149,31 @@ const AdminDashboard = () => {
         </motion.div>
 
         {/* Users by Role */}
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.5 }}
-        >
+        <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.5 }}>
           <Card>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 flex items-center">
-                <BarChart3 className="h-5 w-5 mr-2" />
+                <Users className="h-5 w-5 mr-2" />
                 Users by Role
               </h3>
             </div>
             <div className="space-y-3">
               {usersByRole.map((item) => (
-                <div key={item._id} className="flex items-center justify-between">
-                  <div className="flex items-center">
+                <div key={item.role} className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
                     <Badge
-                      variant={
-                        item._id === 'admin'
-                          ? 'danger'
-                          : item._id === 'author'
-                          ? 'primary'
-                          : 'default'
-                      }
+                      variant={item.role === 'admin' ? 'danger' : item.role === 'author' ? 'primary' : 'default'}
                       className="capitalize"
                     >
-                      {item._id}
+                      {item.role}
                     </Badge>
                   </div>
-                  <span className="text-2xl font-bold text-gray-900 dark:text-gray-100">
-                    {item.count}
-                  </span>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-32 bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                      <div className="bg-primary-600 h-2 rounded-full" style={{ width: `${(item.count / summary.totalUsers) * 100}%` }} />
+                    </div>
+                    <span className="text-lg font-bold text-gray-900 dark:text-gray-100 min-w-[3rem] text-right">{item.count}</span>
+                  </div>
                 </div>
               ))}
             </div>
@@ -216,44 +181,7 @@ const AdminDashboard = () => {
         </motion.div>
       </div>
 
-      {/* Quick Actions */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.6 }}
-      >
-        <Card>
-          <h3 className="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-            Quick Actions
-          </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Button
-              variant="outline"
-              fullWidth
-              icon={Users}
-              onClick={() => navigate(ROUTES.USERS)}
-            >
-              Manage Users
-            </Button>
-            <Button
-              variant="outline"
-              fullWidth
-              icon={FileText}
-              onClick={() => navigate('/admin/posts')}
-            >
-              Manage Posts
-            </Button>
-            <Button
-              variant="outline"
-              fullWidth
-              icon={Plus}
-              onClick={() => navigate(ROUTES.CREATE_POST)}
-            >
-              Create Post
-            </Button>
-          </div>
-        </Card>
-      </motion.div>
+      {/* Add more dashboard components as needed */}
     </Container>
   );
 };

@@ -2,10 +2,10 @@ import { useEffect } from 'react';
 import useTagStore from '../store/useTagStore';
 
 const useTags = () => {
-  const { tags, loading, fetchTags, createTag, updateTag, deleteTag } = useTagStore();
+  const { tags, loading, error, fetchTags, createTag, updateTag, deleteTag } = useTagStore();
 
   useEffect(() => {
-    if (tags.length === 0) {
+    if (!tags.length && !loading) {
       fetchTags();
     }
   }, []);
@@ -13,6 +13,7 @@ const useTags = () => {
   return {
     tags,
     loading,
+    error,
     createTag,
     updateTag,
     deleteTag,

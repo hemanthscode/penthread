@@ -7,9 +7,7 @@ export const AuthContext = createContext(null);
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 };
 
@@ -44,13 +42,10 @@ export const AuthProvider = ({ children }) => {
     try {
       const response = await authService.login(credentials);
       if (response.success) {
-        const profileResponse = await authService.getProfile();
-        if (profileResponse.success) {
-          setUser(profileResponse.data);
-          setIsAuthenticated(true);
-          toast.success('Login successful!');
-          return { success: true };
-        }
+        setUser(response.data.user);
+        setIsAuthenticated(true);
+        toast.success('Login successful!');
+        return { success: true };
       }
     } catch (error) {
       const message = error.response?.data?.message || 'Login failed';
@@ -84,7 +79,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const updateProfile = async (profileData) => {
+  const updateProfile = async () => {
     try {
       const response = await authService.getProfile();
       if (response.success) {

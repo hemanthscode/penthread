@@ -1,4 +1,3 @@
-// src/pages/auth/ResetPassword.jsx
 import { useState } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -20,23 +19,19 @@ const ResetPassword = () => {
 
   const validate = (values) => {
     const errors = {};
-    if (!values.password) {
-      errors.password = 'Password is required';
-    } else if (values.password.length < 8) {
-      errors.password = 'Password must be at least 8 characters';
-    }
+    if (!values.password) errors.password = 'Password is required';
+    else if (values.password.length < 8) errors.password = 'Password must be at least 8 characters';
 
-    if (!values.confirmPassword) {
-      errors.confirmPassword = 'Please confirm your password';
-    } else if (values.password !== values.confirmPassword) {
-      errors.confirmPassword = 'Passwords do not match';
-    }
+    if (!values.confirmPassword) errors.confirmPassword = 'Please confirm your password';
+    else if (values.password !== values.confirmPassword) errors.confirmPassword = 'Passwords do not match';
 
     return errors;
   };
 
-  const { values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting } =
-    useForm({ password: '', confirmPassword: '' }, validate);
+  const { values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting } = useForm(
+    { password: '', confirmPassword: '' },
+    validate
+  );
 
   const onSubmit = async (formValues) => {
     setError('');
@@ -58,39 +53,18 @@ const ResetPassword = () => {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900 py-12 px-4 sm:px-6 lg:px-8">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="max-w-md w-full space-y-8"
-      >
-        {/* Logo and Title */}
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="max-w-md w-full space-y-8">
         <div className="text-center">
           <div className="flex justify-center">
             <BookOpen className="h-12 w-12 text-primary-600 dark:text-primary-400" />
           </div>
-          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-gray-100">
-            Reset your password
-          </h2>
-          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
-            Enter your new password below
-          </p>
+          <h2 className="mt-6 text-3xl font-bold text-gray-900 dark:text-gray-100">Reset your password</h2>
+          <p className="mt-2 text-sm text-gray-600 dark:text-gray-400">Enter your new password below</p>
         </div>
 
-        {/* Success Alert */}
-        {success && (
-          <Alert
-            type="success"
-            title="Password reset successful!"
-            message="Redirecting to login page..."
-          />
-        )}
+        {success && <Alert type="success" title="Password reset successful!" message="Redirecting to login page..." />}
+        {error && <Alert type="error" message={error} onClose={() => setError('')} />}
 
-        {/* Error Alert */}
-        {error && (
-          <Alert type="error" message={error} onClose={() => setError('')} />
-        )}
-
-        {/* Reset Password Form */}
         {!success && (
           <form onSubmit={(e) => handleSubmit(onSubmit)(e)} className="mt-8 space-y-6">
             <div className="space-y-4">
@@ -113,11 +87,7 @@ const ResetPassword = () => {
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-9 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
 
@@ -135,23 +105,14 @@ const ResetPassword = () => {
               />
             </div>
 
-            <Button
-              type="submit"
-              variant="primary"
-              fullWidth
-              loading={isSubmitting}
-              disabled={isSubmitting}
-            >
+            <Button type="submit" variant="primary" fullWidth loading={isSubmitting} disabled={isSubmitting}>
               Reset password
             </Button>
           </form>
         )}
 
         <div className="text-center">
-          <Link
-            to={ROUTES.LOGIN}
-            className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400"
-          >
+          <Link to={ROUTES.LOGIN} className="text-sm font-medium text-primary-600 hover:text-primary-500 dark:text-primary-400">
             Back to login
           </Link>
         </div>

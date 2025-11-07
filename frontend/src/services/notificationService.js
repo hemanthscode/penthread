@@ -1,8 +1,9 @@
 import api from './api';
 
 class NotificationService {
-  async getNotifications() {
-    const response = await api.get('/notifications');
+  async getNotifications(params = {}) {
+    // params: page, limit, unreadOnly etc
+    const response = await api.get('/notifications', { params });
     return response.data;
   }
 
@@ -18,6 +19,16 @@ class NotificationService {
 
   async deleteNotification(notificationId) {
     const response = await api.delete(`/notifications/${notificationId}`);
+    return response.data;
+  }
+
+  async deleteReadNotifications() {
+    const response = await api.delete('/notifications/read');
+    return response.data;
+  }
+
+  async getUnreadCount() {
+    const response = await api.get('/notifications/unread-count');
     return response.data;
   }
 }

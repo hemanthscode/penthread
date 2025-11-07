@@ -1,8 +1,7 @@
-// src/pages/tags/TagList.jsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Tag, Plus, Edit, Trash2 } from 'lucide-react';
+import { Tag, Edit, Trash2 } from 'lucide-react';
 import { useAuth } from '../../hooks';
 import useTags from '../../hooks/useTags';
 import Container from '../../components/layout/Container';
@@ -22,30 +21,27 @@ const TagList = () => {
   const navigate = useNavigate();
   const { isAuthenticated, isAdmin, isAuthor } = useAuth();
   const { tags, loading, createTag, updateTag, deleteTag } = useTags();
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showModal, setShowModal] = useState({ create: false, edit: false, delete: false });
   const [selectedTag, setSelectedTag] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Redirect if not authenticated or not author/admin
+  const canManage = isAuthor() || isAdmin();
+
   useEffect(() => {
     if (!isAuthenticated) {
       toast.error('Please login to manage tags');
       navigate(ROUTES.LOGIN);
-    } else if (!isAuthor() && !isAdmin()) {
+    } else if (!canManage) {
       toast.error('You do not have permission to manage tags');
       navigate(ROUTES.HOME);
     }
-  }, [isAuthenticated, isAuthor, isAdmin, navigate]);
+  }, [isAuthenticated, canManage, navigate]);
 
-  const validate = (values) => {
+  const validate = useCallback((values) => {
     const errors = {};
-    if (!values.name) {
-      errors.name = 'Name is required';
-    }
+    if (!values.name?.trim()) errors.name = 'Name is required';
     return errors;
-  };
+  }, []);
 
   const createForm = useForm({ name: '' }, validate);
   const editForm = useForm({ name: '' }, validate);
@@ -53,52 +49,48 @@ const TagList = () => {
   const handleCreate = async (values) => {
     setSubmitting(true);
     const result = await createTag(values);
+    setSubmitting(false);
     if (result.success) {
       createForm.resetForm();
-      setShowCreateModal(false);
+      setShowModal({ ...showModal, create: false });
     }
-    setSubmitting(false);
   };
 
   const handleEdit = async (values) => {
     if (!selectedTag) return;
     setSubmitting(true);
     const result = await updateTag(selectedTag._id, values);
+    setSubmitting(false);
     if (result.success) {
-      setShowEditModal(false);
+      setShowModal({ ...showModal, edit: false });
       setSelectedTag(null);
       editForm.resetForm();
     }
-    setSubmitting(false);
   };
 
   const handleDelete = async () => {
     if (!selectedTag) return;
     setSubmitting(true);
     const result = await deleteTag(selectedTag._id);
+    setSubmitting(false);
     if (result.success) {
-      setShowDeleteModal(false);
+      setShowModal({ ...showModal, delete: false });
       setSelectedTag(null);
     }
-    setSubmitting(false);
   };
 
   const openEditModal = (tag) => {
     setSelectedTag(tag);
     editForm.setValues({ name: tag.name });
-    setShowEditModal(true);
+    setShowModal({ ...showModal, edit: true });
   };
 
   const openDeleteModal = (tag) => {
     setSelectedTag(tag);
-    setShowDeleteModal(true);
+    setShowModal({ ...showModal, delete: true });
   };
 
-  if (loading) {
-    return <Loader fullScreen />;
-  }
-
-  const canManage = isAuthor() || isAdmin();
+  if (loading) return <Loader fullScreen />;
 
   return (
     <Container className="py-8">
@@ -107,7 +99,7 @@ const TagList = () => {
         description="Manage content tags for better discoverability"
         icon={Tag}
         action={canManage ? "Create Tag" : null}
-        onAction={canManage ? () => setShowCreateModal(true) : null}
+        onAction={canManage ? () => setShowModal({ ...showModal, create: true }) : null}
       />
 
       {tags.length === 0 ? (
@@ -116,7 +108,7 @@ const TagList = () => {
           title="No tags"
           message={canManage ? "Create your first tag to organize content" : "No tags available yet"}
           action={canManage ? "Create Tag" : null}
-          onAction={canManage ? () => setShowCreateModal(true) : null}
+          onAction={canManage ? () => setShowModal({ ...showModal, create: true }) : null}
         />
       ) : (
         <Card>
@@ -137,6 +129,7 @@ const TagList = () => {
                     <button
                       onClick={() => openEditModal(tag)}
                       className="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded"
+                      aria-label="Edit tag"
                     >
                       <Edit className="h-3 w-3" />
                     </button>
@@ -144,6 +137,7 @@ const TagList = () => {
                       <button
                         onClick={() => openDeleteModal(tag)}
                         className="p-1 hover:bg-red-100 dark:hover:bg-red-900/20 rounded text-red-600"
+                        aria-label="Delete tag"
                       >
                         <Trash2 className="h-3 w-3" />
                       </button>
@@ -156,21 +150,16 @@ const TagList = () => {
         </Card>
       )}
 
-      {/* Create Modal */}
       <Modal
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        isOpen={showModal.create}
+        onClose={() => setShowModal({ ...showModal, create: false })}
         title="Create Tag"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setShowCreateModal(false)}>
+            <Button variant="secondary" onClick={() => setShowModal({ ...showModal, create: false })}>
               Cancel
             </Button>
-            <Button
-              variant="primary"
-              loading={submitting}
-              onClick={createForm.handleSubmit(handleCreate)}
-            >
+            <Button variant="primary" loading={submitting} onClick={createForm.handleSubmit(handleCreate)}>
               Create
             </Button>
           </>
@@ -190,21 +179,16 @@ const TagList = () => {
         </div>
       </Modal>
 
-      {/* Edit Modal */}
       <Modal
-        isOpen={showEditModal}
-        onClose={() => setShowEditModal(false)}
+        isOpen={showModal.edit}
+        onClose={() => setShowModal({ ...showModal, edit: false })}
         title="Edit Tag"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setShowEditModal(false)}>
+            <Button variant="secondary" onClick={() => setShowModal({ ...showModal, edit: false })}>
               Cancel
             </Button>
-            <Button
-              variant="primary"
-              loading={submitting}
-              onClick={editForm.handleSubmit(handleEdit)}
-            >
+            <Button variant="primary" loading={submitting} onClick={editForm.handleSubmit(handleEdit)}>
               Update
             </Button>
           </>
@@ -223,14 +207,13 @@ const TagList = () => {
         </div>
       </Modal>
 
-      {/* Delete Modal */}
       <Modal
-        isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
+        isOpen={showModal.delete}
+        onClose={() => setShowModal({ ...showModal, delete: false })}
         title="Delete Tag"
         footer={
           <>
-            <Button variant="secondary" onClick={() => setShowDeleteModal(false)}>
+            <Button variant="secondary" onClick={() => setShowModal({ ...showModal, delete: false })}>
               Cancel
             </Button>
             <Button variant="danger" loading={submitting} onClick={handleDelete}>
@@ -240,7 +223,7 @@ const TagList = () => {
         }
       >
         <p className="text-gray-600 dark:text-gray-400">
-          Are you sure you want to delete the tag <strong>#{selectedTag?.name}</strong>?
+          Are you sure you want to delete <strong>#{selectedTag?.name}</strong>?
         </p>
       </Modal>
     </Container>

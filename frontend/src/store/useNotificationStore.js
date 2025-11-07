@@ -18,6 +18,7 @@ const useNotificationStore = create((set) => ({
       }
     } catch (error) {
       set({ loading: false });
+      // Only log error, don't show toast on page load
       console.error('Failed to fetch notifications:', error);
     }
   },
