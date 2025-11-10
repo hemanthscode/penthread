@@ -2,66 +2,104 @@ import { create } from 'zustand';
 import tagService from '../services/tagService';
 import toast from 'react-hot-toast';
 
-const useTagStore = create((set) => ({
+const useTagStore = create((set, get) => ({
   tags: [],
+  popularTags: [],
   loading: false,
   error: null,
 
-  fetchTags: async () => {
+  fetchTags: async (params = {}) => {
     set({ loading: true, error: null });
     try {
-      const { success, data } = await tagService.getTags();
-      set({ tags: success ? data : [], loading: false });
+      const response = await tagService.getTags(params);
+      set({ 
+        tags: response.success ? response.data : [], 
+        loading: false 
+      });
+      return { success: true, data: response.data };
     } catch (error) {
-      set({ loading: false, error: error.message });
-      toast.error('Failed to fetch tags');
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to fetch tags';
+      set({ loading: false, error: errorMsg, tags: [] });
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
+    }
+  },
+
+  fetchPopularTags: async (limit = 10) => {
+    set({ loading: true, error: null });
+    try {
+      const response = await tagService.getPopularTags(limit);
+      set({ 
+        popularTags: response.success ? response.data : [], 
+        loading: false 
+      });
+      return { success: true, data: response.data };
+    } catch (error) {
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to fetch popular tags';
+      set({ loading: false, error: errorMsg });
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
     }
   },
 
   createTag: async (tagData) => {
     try {
-      const { success, data } = await tagService.createTag(tagData);
-      if (success) {
-        set((state) => ({ tags: [...state.tags, data] }));
-        toast.success('Tag created successfully');
-        return { success: true };
+      const response = await tagService.createTag(tagData);
+      if (response.success && response.data) {
+        set((state) => ({ 
+          tags: [...state.tags, response.data] 
+        }));
+        toast.success(response.message || 'Tag created successfully');
+        return { success: true, data: response.data };
       }
+      throw new Error(response.message || 'Failed to create tag');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to create tag');
-      return { success: false };
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to create tag';
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
     }
   },
 
   updateTag: async (tagId, tagData) => {
     try {
-      const { success, data } = await tagService.updateTag(tagId, tagData);
-      if (success) {
+      const response = await tagService.updateTag(tagId, tagData);
+      if (response.success && response.data) {
         set((state) => ({
-          tags: state.tags.map((t) => (t._id === tagId ? data : t)),
+          tags: state.tags.map((t) => 
+            t._id === tagId ? response.data : t
+          ),
         }));
-        toast.success('Tag updated successfully');
-        return { success: true };
+        toast.success(response.message || 'Tag updated successfully');
+        return { success: true, data: response.data };
       }
+      throw new Error(response.message || 'Failed to update tag');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to update tag');
-      return { success: false };
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to update tag';
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
     }
   },
 
   deleteTag: async (tagId) => {
     try {
-      const { success } = await tagService.deleteTag(tagId);
-      if (success) {
+      const response = await tagService.deleteTag(tagId);
+      if (response.success) {
         set((state) => ({
           tags: state.tags.filter((t) => t._id !== tagId),
         }));
-        toast.success('Tag deleted successfully');
+        toast.success(response.message || 'Tag deleted successfully');
         return { success: true };
       }
+      throw new Error(response.message || 'Failed to delete tag');
     } catch (error) {
-      toast.error(error.response?.data?.message || 'Failed to delete tag');
-      return { success: false };
+      const errorMsg = error.response?.data?.message || error.message || 'Failed to delete tag';
+      toast.error(errorMsg);
+      return { success: false, error: errorMsg };
     }
+  },
+
+  resetTags: () => {
+    set({ tags: [], popularTags: [], loading: false, error: null });
   },
 }));
 

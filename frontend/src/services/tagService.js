@@ -1,29 +1,34 @@
 import api from './api';
 
 class TagService {
-  async getTags() {
-    const { data } = await api.get('/tags');
-    return data;
+  async getTags(params = {}) {
+    const response = await api.get('/tags', { params });
+    return response.data;
+  }
+
+  async getPopularTags(limit = 10) {
+    const response = await api.get('/tags/popular', { params: { limit } });
+    return response.data;
   }
 
   async getTag(tagId) {
-    const { data } = await api.get(`/tags/${tagId}`);
-    return data;
+    const response = await api.get(`/tags/${tagId}`);
+    return response.data;
   }
 
   async createTag(tagData) {
-    const { data } = await api.post('/tags', tagData);
-    return data;
+    const response = await api.post('/tags', tagData);
+    return response.data;
   }
 
   async updateTag(tagId, tagData) {
-    const { data } = await api.patch(`/tags/${tagId}`, tagData);
-    return data;
+    const response = await api.patch(`/tags/${tagId}`, tagData);
+    return response.data;
   }
 
   async deleteTag(tagId) {
-    const { data } = await api.delete(`/tags/${tagId}`);
-    return data;
+    const response = await api.delete(`/tags/${tagId}`);
+    return response.data;
   }
 }
 

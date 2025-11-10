@@ -1,29 +1,29 @@
 import api from './api';
 
 class CategoryService {
-  async getCategories() {
-    const { data } = await api.get('/categories');
-    return data;
+  async getCategories(params = {}) {
+    const response = await api.get('/categories', { params });
+    return response.data;
   }
 
   async getCategory(categoryId) {
-    const { data } = await api.get(`/categories/${categoryId}`);
-    return data;
+    const response = await api.get(`/categories/${categoryId}`);
+    return response.data;
   }
 
   async createCategory(categoryData) {
-    const { data } = await api.post('/categories', categoryData);
-    return data;
+    const response = await api.post('/categories', categoryData);
+    return response.data;
   }
 
   async updateCategory(categoryId, categoryData) {
-    const { data } = await api.patch(`/categories/${categoryId}`, categoryData);
-    return data;
+    const response = await api.patch(`/categories/${categoryId}`, categoryData);
+    return response.data;
   }
 
   async deleteCategory(categoryId) {
-    const { data } = await api.delete(`/categories/${categoryId}`);
-    return data;
+    const response = await api.delete(`/categories/${categoryId}`);
+    return response.data;
   }
 }
 

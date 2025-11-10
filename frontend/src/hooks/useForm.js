@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 
 const useForm = (initialValues = {}, validate) => {
   const [values, setValues] = useState(initialValues);
@@ -6,7 +6,7 @@ const useForm = (initialValues = {}, validate) => {
   const [touched, setTouched] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     const { name, value, type, checked } = e.target;
     const newValue = type === 'checkbox' ? checked : value;
     
@@ -22,9 +22,9 @@ const useForm = (initialValues = {}, validate) => {
         [name]: '',
       }));
     }
-  };
+  }, [errors]);
 
-  const handleBlur = (e) => {
+  const handleBlur = useCallback((e) => {
     const { name } = e.target;
     setTouched((prev) => ({
       ...prev,
@@ -41,11 +41,15 @@ const useForm = (initialValues = {}, validate) => {
         }));
       }
     }
-  };
+  }, [validate, values]);
 
-  const handleSubmit = async (onSubmit) => {
+  const handleSubmit = useCallback((onSubmit) => {
+    // Return a function that can be called with or without an event
     return async (e) => {
-      e.preventDefault();
+      // Prevent default only if event exists
+      if (e && e.preventDefault) {
+        e.preventDefault();
+      }
       
       // Mark all fields as touched
       const allTouched = Object.keys(values).reduce((acc, key) => {
@@ -67,32 +71,34 @@ const useForm = (initialValues = {}, validate) => {
       setIsSubmitting(true);
       try {
         await onSubmit(values);
+      } catch (error) {
+        console.error('Form submission error:', error);
       } finally {
         setIsSubmitting(false);
       }
     };
-  };
+  }, [values, validate]);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setValues(initialValues);
     setErrors({});
     setTouched({});
     setIsSubmitting(false);
-  };
+  }, [initialValues]);
 
-  const setFieldValue = (name, value) => {
+  const setFieldValue = useCallback((name, value) => {
     setValues((prev) => ({
       ...prev,
       [name]: value,
     }));
-  };
+  }, []);
 
-  const setFieldError = (name, error) => {
+  const setFieldError = useCallback((name, error) => {
     setErrors((prev) => ({
       ...prev,
       [name]: error,
     }));
-  };
+  }, []);
 
   return {
     values,

@@ -1,15 +1,26 @@
-import { useEffect } from 'react';
+import { useEffect, useCallback } from 'react';
 import useCategoryStore from '../store/useCategoryStore';
 
-const useCategories = () => {
-  const { categories, loading, error, fetchCategories, createCategory, updateCategory, deleteCategory } =
-    useCategoryStore();
+const useCategories = (autoFetch = true) => {
+  const { 
+    categories, 
+    loading, 
+    error, 
+    fetchCategories, 
+    createCategory, 
+    updateCategory, 
+    deleteCategory 
+  } = useCategoryStore();
+
+  const refetch = useCallback(async (params) => {
+    return await fetchCategories(params);
+  }, [fetchCategories]);
 
   useEffect(() => {
-    if (!categories.length && !loading) {
+    if (autoFetch && categories.length === 0 && !loading) {
       fetchCategories();
     }
-  }, []);
+  }, [autoFetch]); // Only depend on autoFetch to prevent infinite loops
 
   return {
     categories,
@@ -18,7 +29,7 @@ const useCategories = () => {
     createCategory,
     updateCategory,
     deleteCategory,
-    refetch: fetchCategories,
+    refetch,
   };
 };
 
