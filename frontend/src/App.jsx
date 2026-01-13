@@ -3,7 +3,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { ToastProvider } from './context/ToastContext'; // ✅ New Toast System
+import { ToastProvider } from './context/ToastContext';
 import { MainLayout, DashboardLayout, ProtectedRoute, PublicRoute } from './components/layout';
 
 // ==================== AUTH PAGES ====================

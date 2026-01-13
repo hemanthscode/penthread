@@ -193,7 +193,7 @@ npm install
 cp .env.sample .env
 # Edit .env with your MongoDB URI, JWT secret, etc.
 npm run db:seed  # Seed database with sample data
-npm run dev      # Start backend on port 5000
+npm run dev      # Start backend on port 4000
 ```
 
 #### **3. Frontend Setup**
@@ -202,14 +202,14 @@ npm run dev      # Start backend on port 5000
 cd ../frontend
 npm install
 cp .env.sample .env
-# Set VITE_API_BASE_URL=http://localhost:5000/api
+# Set VITE_API_BASE_URL=http://localhost:4000/api
 npm run dev      # Start frontend on port 5173
 ```
 
 #### **4. Access Application**
 
 * Frontend: `http://localhost:5173`
-* Backend API: `http://localhost:5000/api`
+* Backend API: `http://localhost:4000/api`
 
 ### **Default Seeded Accounts**
 
@@ -226,7 +226,7 @@ npm run dev      # Start frontend on port 5173
 ### **Base URL**
 
 ```
-http://localhost:5000/api
+http://localhost:4000/api
 ```
 
 ### **Module Endpoints**
@@ -366,7 +366,7 @@ npm run build
 # Output directory
 dist/
 # Environment variables
-VITE_API_BASE_URL=https://your-backend-api.com/api
+VITE_API_BASE_URL=http://localhost:4000/api
 ```
 
 ---

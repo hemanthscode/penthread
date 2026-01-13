@@ -137,7 +137,7 @@ npm install
 
 ```bash
 cp .env.sample .env
-# Set VITE_API_BASE_URL=http://localhost:5000/api
+# Set VITE_API_BASE_URL=http://localhost:4000/api
 ```
 
 ### **4️⃣ Start Development Server**
@@ -272,7 +272,7 @@ npm run test:e2e
 ### **Environment Variables**
 
 ```env
-VITE_API_BASE_URL=https://api.penthread.com/api
+VITE_API_BASE_URL=http://localhost:4000/api
 VITE_APP_NAME=PenThread
 ```
 
