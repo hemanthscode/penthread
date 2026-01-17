@@ -32,58 +32,45 @@ function prompt(question) {
 }
 
 /**
- * Creates admin user
+ * Creates admin user with production credentials
  */
 async function seedAdmin() {
   try {
     await connectDB();
 
     // Check if admin already exists
-    const existingAdmin = await User.findOne({ role: ROLES.ADMIN });
+    const existingAdmin = await User.findOne({ email: 'hemanth@gmail.com' });
     
     if (existingAdmin) {
       console.log('\n⚠️  Admin user already exists!');
       console.log(`Email: ${existingAdmin.email}`);
       console.log(`Name: ${existingAdmin.name}`);
       
-      const overwrite = await prompt('\nDo you want to create another admin? (yes/no): ');
+      const overwrite = await prompt('\nDo you want to overwrite the existing admin? (yes/no): ');
       
       if (overwrite.toLowerCase() !== 'yes') {
         console.log('\n✓ Seed cancelled');
         process.exit(0);
       }
+      
+      // Delete existing admin to recreate
+      await User.deleteOne({ email: 'hemanth@gmail.com' });
+      console.log('✓ Existing admin removed');
     }
 
-    console.log('\n📝 Create Admin User\n');
+    console.log('\n📝 Creating Admin User\n');
 
-    const name = await prompt('Admin Name: ');
-    const email = await prompt('Admin Email: ');
-    const password = await prompt('Admin Password (min 8 chars): ');
-
-    // Validate inputs
-    if (!name || !email || !password) {
-      throw new Error('All fields are required');
-    }
-
-    if (password.length < 8) {
-      throw new Error('Password must be at least 8 characters');
-    }
-
-    // Check if email already exists
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      throw new Error('Email already registered');
-    }
-
-    // Create admin user
-    const admin = new User({
-      name,
-      email,
-      password,
+    // Production admin credentials
+    const adminData = {
+      name: 'Hemanth',
+      email: 'hemanth@gmail.com',
+      password: 'Test@123',
       role: ROLES.ADMIN,
       isActive: true,
-    });
+    };
 
+    // Create admin user
+    const admin = new User(adminData);
     await admin.save();
 
     console.log('\n✓ Admin user created successfully!\n');
