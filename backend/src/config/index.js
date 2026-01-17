@@ -71,7 +71,12 @@ const config = {
   cors: {
     origins: process.env.CORS_ORIGINS
       ? process.env.CORS_ORIGINS.split(',')
-      : ['http://localhost:5173', 'http://localhost:3000'],
+      : [
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'https://penthread.vercel.app',          
+        'https://penthread-git-main-*.vercel.app',
+      ],
     credentials: true,
   },
 
