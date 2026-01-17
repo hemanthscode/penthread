@@ -49,6 +49,22 @@ export default function createExpressApp() {
   // Rate limiting
   app.use(apiRateLimiter);
 
+  // Root endpoint
+  app.get('/', (req, res) => {
+    res.status(200).json({
+      success: true,
+      message: 'Welcome to PenThread API',
+      version: '1.0.0',
+      status: 'operational',
+      environment: config.env,
+      endpoints: {
+        health: '/health',
+        api: '/api',
+        documentation: '/api/docs'
+      }
+    });
+  });
+
   // Health check endpoint
   app.get('/health', (req, res) => {
     res.status(200).json({
@@ -56,6 +72,8 @@ export default function createExpressApp() {
       message: 'Server is healthy',
       timestamp: new Date().toISOString(),
       environment: config.env,
+      database: 'connected',
+      uptime: process.uptime()
     });
   });
 
@@ -67,6 +85,7 @@ export default function createExpressApp() {
     res.status(404).json({
       success: false,
       message: `Cannot ${req.method} ${req.path}`,
+      suggestion: 'Check the API documentation for available endpoints'
     });
   });
 

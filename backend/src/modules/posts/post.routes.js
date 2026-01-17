@@ -21,6 +21,22 @@ import { createCommentSchema } from '../comments/comment.validators.js';
 
 const router = Router();
 
+// ==================== INFO ENDPOINT ====================
+router.get('/', (req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Posts API endpoints',
+    endpoints: {
+      publicPosts: 'GET /api/posts/public',
+      singlePost: 'GET /api/posts/:postId',
+      myPosts: 'GET /api/posts/my-posts (requires auth)',
+      createPost: 'POST /api/posts (requires auth)',
+      updatePost: 'PATCH /api/posts/:postId (requires auth)',
+      deletePost: 'DELETE /api/posts/:postId (requires auth)',
+    }
+  });
+});
+
 // ==================== PUBLIC ROUTES (with optional auth) ====================
 router.get(
   '/public',
